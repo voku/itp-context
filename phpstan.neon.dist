@@ -1,0 +1,7 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+        - examples/basic-domain/src
+    tmpDir: .phpstan

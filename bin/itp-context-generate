@@ -1,0 +1,25 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloadPath = $GLOBALS['_composer_autoload_path'] ?? dirname(__DIR__) . '/vendor/autoload.php';
+
+if (!is_string($autoloadPath) || !file_exists($autoloadPath)) {
+    fwrite(STDERR, "Autoload file not found.\n");
+    exit(1);
+}
+
+require $autoloadPath;
+
+try {
+    (new ItpContext\Service\Generator())->handle(
+        $argv[1] ?? null,
+        $argv[2] ?? null,
+        $argv[3] ?? null,
+        $argv[4] ?? null,
+    );
+} catch (Throwable $throwable) {
+    fwrite(STDERR, $throwable->getMessage() . "\n");
+    exit(1);
+}

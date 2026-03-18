@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloadPath = $GLOBALS['_composer_autoload_path'] ?? dirname(__DIR__) . '/vendor/autoload.php';
+
+if (!is_string($autoloadPath) || !file_exists($autoloadPath)) {
+    fwrite(STDERR, "Autoload file not found.\n");
+    exit(1);
+}
+
+require $autoloadPath;
+
+$enumClass = $argv[1] ?? null;
+if ($enumClass === null || $enumClass === '') {
+    fwrite(STDERR, "Missing enum FQCN.\n");
+    exit(1);
+}
+
+$errors = (new ItpContext\Service\Validator())->validateEnumClass($enumClass);
+if ($errors === []) {
+    echo "OK\n";
+    exit(0);
+}
+
+foreach ($errors as $error) {
+    fwrite(STDERR, $error . "\n");
+}
+
+exit(1);

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="tests/bootstrap.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         executionOrder="default"
+         failOnRisky="true"
+         failOnWarning="true"
+         beStrictAboutOutputDuringTests="true"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <testsuites>
+        <testsuite name="itp-context">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
