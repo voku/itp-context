@@ -43,7 +43,6 @@ final class ContextResolver
             throw new RuntimeException("Missing context catalog at {$catalogPath}");
         }
 
-        /** @var mixed $catalog */
         $catalog = require $catalogPath;
         if (!is_array($catalog)) {
             throw new RuntimeException("Catalog must return an array: {$catalogPath}");

@@ -42,8 +42,9 @@ final class TokenParser
                 continue;
             }
 
-            $fqcn = $namespace !== '' ? $namespace . '\\' . $name : $name;
             /** @var class-string $fqcn */
+            $fqcn = $namespace !== '' ? $namespace . '\\' . $name : $name;
+
 
             return new ParsedSymbol($kind, $fqcn);
         }
@@ -63,7 +64,7 @@ final class TokenParser
         for ($cursor = $index + 1; $cursor < $count; $cursor++) {
             $token = $tokens[$cursor];
 
-            if (is_string($token) && ($token === ';' || $token === '{')) {
+            if ($token === ';' || $token === '{') {
                 return [$namespace, $cursor];
             }
 
