@@ -45,7 +45,8 @@
   "bin": [
     "bin/itp-context-summarize",
     "bin/itp-context-validate",
-    "bin/itp-context-generate"
+    "bin/itp-context-generate",
+    "bin/itp-context-export"
   ],
   "scripts": {
     "phpstan": "phpstan analyse --configuration=phpstan.neon.dist",

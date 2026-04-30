@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace ItpContext\Service;
 
+use ItpContext\Attribute\Rule;
+use ItpContext\Context\PackageRules;
+
+#[Rule(PackageRules::TokenFirstDiscovery)]
 final class TokenParser
 {
     public function getFirstSymbolFromFile(string $filePath): ?ParsedSymbol
@@ -33,7 +37,15 @@ final class TokenParser
                 T_ENUM => 'enum',
             };
 
-            if ($kind === 'class' && $this->isAnonymousClass($tokens, $index)) {
+            if (
+                $kind === 'class' 
+                && 
+                (
+                    $this->isAnonymousClass($tokens, $index) 
+                    || 
+                    $this->isClassConstantReference($tokens, $index)
+                )
+            ) {
                 continue;
             }
 
@@ -118,6 +130,27 @@ final class TokenParser
             }
 
             return $token[0] === T_NEW;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<int, array{0:int,1:string,2?:int}|string> $tokens
+     */
+    private function isClassConstantReference(array $tokens, int $classTokenIndex): bool
+    {
+        for ($cursor = $classTokenIndex - 1; $cursor >= 0; $cursor--) {
+            $token = $tokens[$cursor];
+            if (!is_array($token)) {
+                continue;
+            }
+
+            if (in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
+                continue;
+            }
+
+            return $token[0] === T_DOUBLE_COLON;
         }
 
         return false;

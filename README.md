@@ -8,10 +8,11 @@ A small PHP library for attaching architecture rules to code via PHP attributes 
 
 It gives you:
 - typed rule identifiers via enums
-- `#[Rule(...)]` attributes for classes and methods
+- repeatable `#[Rule(...)]` attributes for classes and methods
 - rule catalogs with ownership, rationale, references and proof metadata
 - validation helpers for stale or orphaned catalog entries
 - summary output for annotated PHP symbols
+- compact markdown context exports for coding agents and repository assistants
 - a small generator for bootstrapping new rule enums and catalogs
 
 ## Index
@@ -39,6 +40,11 @@ When architecture guidance only lives in ADRs and wikis, it drifts away from the
 - attach architecture intent to classes and methods
 - validate whether enum cases and catalog entries still match
 - summarize relevant architecture context for one PHP file
+
+The goal is to add context **without burning tokens**:
+- prefer a few broad, high-signal rules over many narrow ones
+- annotate central symbols, not every class in the tree
+- export compact markdown that is easy for humans and LLMs to scan
 
 ## Usage
 
@@ -93,6 +99,8 @@ return [
 ```
 
 ### 3. Annotate your code
+
+Keep annotations selective: tag the classes or methods where architecture context changes decisions, not every file.
 
 ```php
 <?php
@@ -158,6 +166,35 @@ Example output:
 - **Refs:** docs/adr/i18n.md
 ```
 
+### 6. Export agent-friendly context for a source tree
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use ItpContext\Service\ContextExporter;
+
+$report = (new ContextExporter())->export(
+    outputDir: __DIR__ . '/var/itp-context',
+    sourceDirs: [__DIR__ . '/src'],
+    excludePaths: ['vendor', 'tests'],
+);
+```
+
+This writes:
+- `var/itp-context/index.md`
+- one markdown file per annotated PHP symbol under `var/itp-context/php/`
+
+The export is intentionally lean:
+- annotate only the few symbols that carry important architecture context
+- use broad rules that stay stable as the code evolves
+- keep frontmatter small: `id`, `title`, `source_path`, `kind` and `rule_ids`
+
+This repository dogfoods that approach with a few high-signal `ItpContext\Context\PackageRules` annotations on core services, and a committed self-export snapshot lives under `docs/package-export/`.
+
+That `docs/package-export/` tree is meant to be a ready-made reference for coding agents: it shows the compact export shape, the small set of package rules and the level of abstraction that keeps context useful without wasting tokens.
+
 ## Local Development
 
 If you want to test the package before publishing it, use a Composer path repository in a separate project:
@@ -192,6 +229,7 @@ After that the package CLIs are available in the consumer project via:
 ```shell
 vendor/bin/itp-context-validate 'Acme\Context\ArchitectureRules'
 vendor/bin/itp-context-summarize src/Ui/DashboardView.php
+vendor/bin/itp-context-export var/itp-context src --exclude=vendor --exclude=tests
 ```
 
 ## Project Structure
@@ -202,11 +240,11 @@ Your project-specific files stay in your own codebase, for example:
 - `src/Context/ArchitectureRules.php`
 - `src/Context/ArchitectureCatalog.php`
 
-A minimal example project is included under `examples/basic-domain`.
+A minimal example project is included under `examples/basic-domain`, and the repository's self-export snapshot lives under `docs/package-export`.
 
 ## CLI Tools
 
-The package ships with three small CLI helpers.
+The package ships with four small CLI helpers.
 
 ### `itp-context-summarize`
 
@@ -229,6 +267,19 @@ vendor/bin/itp-context-generate Architecture SecurityBoundary src/Context Acme\\
 This creates or extends:
 - `src/Context/ArchitectureRules.php`
 - `src/Context/ArchitectureCatalog.php`
+
+### `itp-context-export`
+
+```shell
+vendor/bin/itp-context-export var/itp-context src --exclude=vendor --exclude=tests
+```
+
+The export contains:
+- `index.md` with an overview of all exported symbols
+- one markdown file per annotated PHP symbol under `php/`
+- compact frontmatter fields for `id`, `title`, `source_path`, `kind` and `rule_ids`
+
+For small libraries, prefer a tiny export with a few high-value symbols over exhaustive annotation. The goal is context density, not full documentation coverage.
 
 ## Tests
 

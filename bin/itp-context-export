@@ -1,0 +1,68 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloadPath = $GLOBALS['_composer_autoload_path'] ?? dirname(__DIR__) . '/vendor/autoload.php';
+
+if (!is_string($autoloadPath) || !file_exists($autoloadPath)) {
+    fwrite(STDERR, "Autoload file not found.\n");
+    exit(1);
+}
+
+require $autoloadPath;
+
+$outputDir = null;
+$sourceDirs = [];
+$excludePaths = [];
+
+foreach (array_slice($argv, 1) as $argument) {
+    if (str_starts_with($argument, '--exclude=')) {
+        $excludePath = substr($argument, strlen('--exclude='));
+        if ($excludePath !== false && $excludePath !== '') {
+            $excludePaths[] = $excludePath;
+        }
+
+        continue;
+    }
+
+    if ($outputDir === null) {
+        $outputDir = $argument;
+        continue;
+    }
+
+    $sourceDirs[] = $argument;
+}
+
+if ($outputDir === null || $outputDir === '') {
+    fwrite(STDERR, "Usage: vendor/bin/itp-context-export <output-dir> [source-dir ...] [--exclude=path]\n");
+    exit(1);
+}
+
+if ($sourceDirs === []) {
+    $cwd = getcwd();
+    if (!is_string($cwd) || $cwd === '') {
+        fwrite(STDERR, "Could not determine the current working directory.\n");
+        exit(1);
+    }
+
+    $defaultSourceDir = $cwd . '/src';
+    $sourceDirs[] = is_dir($defaultSourceDir) ? $defaultSourceDir : $cwd;
+}
+
+try {
+    $report = (new ItpContext\Service\ContextExporter())->export($outputDir, $sourceDirs, $excludePaths);
+} catch (Throwable $throwable) {
+    fwrite(STDERR, $throwable->getMessage() . "\n");
+    exit(1);
+}
+
+echo "Exported {$report->exportedDocumentCount} context documents to {$report->outputDir}\n";
+
+if ($report->hasErrors()) {
+    foreach ($report->errors as $error) {
+        fwrite(STDERR, $error . "\n");
+    }
+
+    exit(1);
+}

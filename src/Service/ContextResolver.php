@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace ItpContext\Service;
 
+use ItpContext\Attribute\Rule;
+use ItpContext\Context\PackageRules;
 use ItpContext\Contract\RuleIdentifier;
 use ItpContext\Model\RuleDef;
 use ReflectionEnum;
 use RuntimeException;
 
+#[Rule(PackageRules::FrameworkAgnostic)]
+#[Rule(PackageRules::CatalogByConvention)]
 final class ContextResolver
 {
     /**
