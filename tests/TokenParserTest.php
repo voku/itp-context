@@ -13,7 +13,7 @@ final class TokenParserTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->tmpPath = sys_get_temp_dir() . '/itp-context-token-parser-test-' . str_replace('.', '', uniqid('', true));
+        $this->tmpPath = sys_get_temp_dir() . '/' . uniqid('itp-context-token-parser-test-');
         mkdir($this->tmpPath, 0777, true);
     }
 
@@ -136,7 +136,7 @@ final class TokenParserTest extends TestCase
 
     private function writePhpFile(string $code): string
     {
-        $path = $this->tmpPath . '/' . str_replace('.', '', uniqid('', true)) . '.php';
+        $path = $this->tmpPath . '/' . uniqid('fixture-') . '.php';
         file_put_contents($path, "<?php\n" . $code . "\n");
 
         return $path;

@@ -14,7 +14,7 @@ final class SummarizerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->fixturePath = sys_get_temp_dir() . '/itp-context-summarizer-test-' . str_replace('.', '', uniqid('', true));
+        $this->fixturePath = sys_get_temp_dir() . '/' . uniqid('itp-context-summarizer-test-');
         mkdir($this->fixturePath, 0777, true);
     }
 
@@ -129,7 +129,7 @@ PHP);
      */
     private function createTierFixtures(): array
     {
-        $namespace = 'ItpContext\\Tests\\SummarizerFixture' . str_replace('.', '', uniqid('', true));
+        $namespace = 'ItpContext\\Tests\\' . uniqid('SummarizerFixture');
 
         $rulesPath = $this->writeFixtureFile('TierRules.php', <<<PHP
 <?php
@@ -202,7 +202,7 @@ PHP);
 
     private function createMixedRuleFixture(): string
     {
-        $namespace = 'ItpContext\\Tests\\SummarizerMixedFixture' . str_replace('.', '', uniqid('', true));
+        $namespace = 'ItpContext\\Tests\\' . uniqid('SummarizerMixedFixture');
 
         $rulesPath = $this->writeFixtureFile('MixedRules.php', <<<PHP
 <?php

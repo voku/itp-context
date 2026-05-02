@@ -13,7 +13,7 @@ final class GeneratorTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->generatedPath = sys_get_temp_dir() . '/itp-context-generator-test-' . str_replace('.', '', uniqid('', true));
+        $this->generatedPath = sys_get_temp_dir() . '/' . uniqid('itp-context-generator-test-');
         $this->removeDirectory($this->generatedPath);
     }
 

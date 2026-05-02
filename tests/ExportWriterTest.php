@@ -14,7 +14,7 @@ final class ExportWriterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->outputPath = sys_get_temp_dir() . '/itp-context-export-writer-test-' . str_replace('.', '', uniqid('', true));
+        $this->outputPath = sys_get_temp_dir() . '/' . uniqid('itp-context-export-writer-test-');
     }
 
     protected function tearDown(): void
