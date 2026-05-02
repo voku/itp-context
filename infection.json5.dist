@@ -16,7 +16,7 @@
   "tmpDir": ".infection",
   "threads": "max",
   "phpUnit": {
-    "configDir": ".",
+    "configDir": "tools/infection-phpunit",
     "customPath": "vendor/bin/phpunit"
   },
   "phpStan": {
