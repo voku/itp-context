@@ -42,7 +42,7 @@ final class ExportWriter
     private function ensureDirectoryExists(string $directory): void
     {
         if (file_exists($directory) && !is_dir($directory)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created.', $directory));
+            throw new RuntimeException(sprintf('Directory "%s" exists but is not a directory.', $directory));
         }
 
         if (is_dir($directory)) {

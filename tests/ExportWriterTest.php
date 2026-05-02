@@ -89,6 +89,16 @@ final class ExportWriterTest extends TestCase
         (new ExportWriter($this->outputPath))->writeMarkdown('php', 'custom-slug', ['title' => 'Context'], 'Body');
     }
 
+    public function testWriteMarkdownThrowsClearErrorWhenOutputPathExistsAsFile(): void
+    {
+        file_put_contents($this->outputPath, 'blocker');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('exists but is not a directory');
+
+        (new ExportWriter($this->outputPath))->writeMarkdown('', 'custom-slug', ['title' => 'Context'], 'Body');
+    }
+
     public function testWriteMarkdownThrowsWhenFileCannotBeWritten(): void
     {
         mkdir($this->outputPath . '/readonly/php', 0777, true);

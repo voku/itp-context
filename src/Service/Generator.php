@@ -17,10 +17,6 @@ final class Generator
         $baseDir = $baseDir !== null && $baseDir !== '' ? rtrim($baseDir, '/') : getcwd() . '/src/Context';
         $baseNamespace = $baseNamespace !== null && $baseNamespace !== '' ? trim($baseNamespace, '\\') : 'App\\Context';
 
-        if (file_exists($baseDir) && !is_dir($baseDir)) {
-            throw new RuntimeException("Failed to create directory: {$baseDir}");
-        }
-
         $this->ensureDirectoryExists($baseDir);
 
         $enumPath = $baseDir . '/' . $domain . 'Rules.php';
@@ -37,9 +33,7 @@ final class Generator
 
     private function ensureEnumExists(string $domain, string $baseNamespace, string $path): void
     {
-        if (file_exists($path) && !is_file($path)) {
-            throw new RuntimeException("Failed to read: {$path}");
-        }
+        $this->ensureFilePathIsReadable($path);
 
         if (file_exists($path)) {
             return;
@@ -83,9 +77,7 @@ PHP;
 
     private function ensureCatalogExists(string $baseNamespace, string $path): void
     {
-        if (file_exists($path) && !is_file($path)) {
-            throw new RuntimeException("Failed to read: {$path}");
-        }
+        $this->ensureFilePathIsReadable($path);
 
         if (file_exists($path)) {
             return;
@@ -139,15 +131,26 @@ PHP;
 
     private function ensureDirectoryExists(string $path): void
     {
+        if (file_exists($path) && !is_dir($path)) {
+            throw new RuntimeException("Failed to create directory: {$path} (path exists but is not a directory)");
+        }
+
         if (is_dir($path)) {
             return;
         }
 
         error_clear_last();
 
-        if (!@mkdir($path, 0777, true) && !is_dir($path)) {
+        if (!@mkdir($path, 0755, true) && !is_dir($path)) {
             $message = self::formatLastErrorMessage(error_get_last());
             throw new RuntimeException("Failed to create directory: {$path}{$message}");
+        }
+    }
+
+    private function ensureFilePathIsReadable(string $path): void
+    {
+        if (file_exists($path) && !is_file($path)) {
+            throw new RuntimeException("Failed to read: {$path}");
         }
     }
 
