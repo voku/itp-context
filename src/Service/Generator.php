@@ -21,9 +21,7 @@ final class Generator
             throw new RuntimeException("Failed to create directory: {$baseDir}");
         }
 
-        if (!is_dir($baseDir) && !@mkdir($baseDir, 0777, true) && !is_dir($baseDir)) {
-            throw new RuntimeException("Failed to create directory: {$baseDir}");
-        }
+        $this->ensureDirectoryExists($baseDir);
 
         $enumPath = $baseDir . '/' . $domain . 'Rules.php';
         $catalogPath = $baseDir . '/' . $domain . 'Catalog.php';
@@ -61,9 +59,7 @@ enum {$domain}Rules implements RuleIdentifier
 }
 PHP;
 
-        if (@file_put_contents($path, $content . "\n") === false) {
-            throw new RuntimeException("Failed to write: {$path}");
-        }
+        $this->writeFile($path, $content . "\n");
     }
 
     private function appendEnumCase(string $path, string $ruleName): void
@@ -82,9 +78,7 @@ PHP;
             throw new RuntimeException("Failed to update enum file: {$path}");
         }
 
-        if (@file_put_contents($path, $newContent) === false) {
-            throw new RuntimeException("Failed to write: {$path}");
-        }
+        $this->writeFile($path, $newContent);
     }
 
     private function ensureCatalogExists(string $baseNamespace, string $path): void
@@ -111,9 +105,7 @@ return [
 ];
 PHP;
 
-        if (@file_put_contents($path, $content . "\n") === false) {
-            throw new RuntimeException("Failed to write: {$path}");
-        }
+        $this->writeFile($path, $content . "\n");
     }
 
     private function appendCatalogEntry(string $path, string $ruleName, string $domain): void
@@ -142,8 +134,32 @@ PHP;
         }
 
         $newContent = substr($content, 0, $position) . $entry . "\n" . substr($content, $position);
-        if (@file_put_contents($path, $newContent) === false) {
-            throw new RuntimeException("Failed to write: {$path}");
+        $this->writeFile($path, $newContent);
+    }
+
+    private function ensureDirectoryExists(string $path): void
+    {
+        if (is_dir($path)) {
+            return;
+        }
+
+        error_clear_last();
+
+        if (!@mkdir($path, 0777, true) && !is_dir($path)) {
+            $detail = error_get_last();
+            $message = is_array($detail) && isset($detail['message']) ? ' (' . $detail['message'] . ')' : '';
+            throw new RuntimeException("Failed to create directory: {$path}{$message}");
+        }
+    }
+
+    private function writeFile(string $path, string $content): void
+    {
+        error_clear_last();
+
+        if (@file_put_contents($path, $content) === false) {
+            $detail = error_get_last();
+            $message = is_array($detail) && isset($detail['message']) ? ' (' . $detail['message'] . ')' : '';
+            throw new RuntimeException("Failed to write: {$path}{$message}");
         }
     }
 }

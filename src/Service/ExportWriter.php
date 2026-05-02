@@ -26,21 +26,37 @@ final class ExportWriter
         $fileName = $this->normalizeSlug($slug) . '.md';
         $directory = $safeArea !== '' ? $this->outputDir . '/' . $safeArea : $this->outputDir;
 
+        $this->ensureDirectoryExists($directory);
+
+        $path = $directory . '/' . $fileName;
+        error_clear_last();
+        $bytes = @file_put_contents($path, Frontmatter::render($meta, $body));
+        if ($bytes === false) {
+            $detail = error_get_last();
+            $message = is_array($detail) && isset($detail['message']) ? ' (' . $detail['message'] . ')' : '';
+            throw new RuntimeException("Failed to write export file: {$path}{$message}");
+        }
+
+        return $path;
+    }
+
+    private function ensureDirectoryExists(string $directory): void
+    {
         if (file_exists($directory) && !is_dir($directory)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created.', $directory));
         }
 
-        if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created.', $directory));
+        if (is_dir($directory)) {
+            return;
         }
 
-        $path = $directory . '/' . $fileName;
-        $bytes = @file_put_contents($path, Frontmatter::render($meta, $body));
-        if ($bytes === false) {
-            throw new RuntimeException("Failed to write export file: {$path}");
-        }
+        error_clear_last();
 
-        return $path;
+        if (!@mkdir($directory, 0755, true) && !is_dir($directory)) {
+            $detail = error_get_last();
+            $message = is_array($detail) && isset($detail['message']) ? ' (' . $detail['message'] . ')' : '';
+            throw new RuntimeException(sprintf('Directory "%s" was not created.%s', $directory, $message));
+        }
     }
 
     private function normalizeSlug(string $slug): string
