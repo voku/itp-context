@@ -284,7 +284,9 @@ For small libraries, prefer a tiny export with a few high-value symbols over exh
 ## Tests
 
 ```shell
+composer phpstan
 composer test
+composer infection
 ```
 
 There is also a package smoke check in `tests/smoke/package_smoke.php`.

@@ -50,7 +50,8 @@
   ],
   "scripts": {
     "phpstan": "phpstan analyse --configuration=phpstan.neon.dist",
-    "test": "phpunit"
+    "test": "phpunit",
+    "infection": "infection --configuration=infection.json5.dist"
   },
   "extra": {
     "branch-alias": {

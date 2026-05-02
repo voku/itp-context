@@ -41,3 +41,29 @@ jobs:
 
       - name: Run smoke check
         run: php tests/smoke/package_smoke.php
+
+  infection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: xdebug
+          tools: composer:v2, infection
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Run PHPStan
+        run: composer phpstan
+
+      - name: Run Infection
+        run: composer infection
