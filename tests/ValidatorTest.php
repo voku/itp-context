@@ -24,4 +24,11 @@ final class ValidatorTest extends TestCase
 
         self::assertSame([], $errors);
     }
+
+    public function testValidateEnumClassRejectsNonRuleIdentifierClasses(): void
+    {
+        $errors = (new Validator())->validateEnumClass(\stdClass::class);
+
+        self::assertSame(['Not a RuleIdentifier enum: stdClass'], $errors);
+    }
 }

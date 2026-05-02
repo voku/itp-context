@@ -2,7 +2,11 @@
   "$schema": "https://infection.github.io/schema.json",
   "source": {
     "directories": [
-      "src"
+      "src",
+      "examples/basic-domain/src"
+    ],
+    "excludes": [
+      "examples/basic-domain/src/Tests"
     ]
   },
   "logs": {
@@ -21,5 +25,7 @@
   },
   "staticAnalysisTool": "phpstan",
   "staticAnalysisToolOptions": "--memory-limit=1G",
-  "testFrameworkOptions": "--colors=never"
+  "testFrameworkOptions": "--colors=never --do-not-cache-result",
+  "minMsi": 95,
+  "minCoveredMsi": 100
 }

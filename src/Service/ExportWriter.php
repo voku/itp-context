@@ -26,12 +26,16 @@ final class ExportWriter
         $fileName = $this->normalizeSlug($slug) . '.md';
         $directory = $safeArea !== '' ? $this->outputDir . '/' . $safeArea : $this->outputDir;
 
-        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+        if (file_exists($directory) && !is_dir($directory)) {
+            throw new RuntimeException(sprintf('Directory "%s" was not created.', $directory));
+        }
+
+        if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created.', $directory));
         }
 
         $path = $directory . '/' . $fileName;
-        $bytes = file_put_contents($path, Frontmatter::render($meta, $body));
+        $bytes = @file_put_contents($path, Frontmatter::render($meta, $body));
         if ($bytes === false) {
             throw new RuntimeException("Failed to write export file: {$path}");
         }

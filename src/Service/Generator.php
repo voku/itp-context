@@ -17,7 +17,11 @@ final class Generator
         $baseDir = $baseDir !== null && $baseDir !== '' ? rtrim($baseDir, '/') : getcwd() . '/src/Context';
         $baseNamespace = $baseNamespace !== null && $baseNamespace !== '' ? trim($baseNamespace, '\\') : 'App\\Context';
 
-        if (!is_dir($baseDir) && !mkdir($baseDir, 0777, true) && !is_dir($baseDir)) {
+        if (file_exists($baseDir) && !is_dir($baseDir)) {
+            throw new RuntimeException("Failed to create directory: {$baseDir}");
+        }
+
+        if (!is_dir($baseDir) && !@mkdir($baseDir, 0777, true) && !is_dir($baseDir)) {
             throw new RuntimeException("Failed to create directory: {$baseDir}");
         }
 
@@ -35,6 +39,10 @@ final class Generator
 
     private function ensureEnumExists(string $domain, string $baseNamespace, string $path): void
     {
+        if (file_exists($path) && !is_file($path)) {
+            throw new RuntimeException("Failed to read: {$path}");
+        }
+
         if (file_exists($path)) {
             return;
         }
@@ -53,7 +61,9 @@ enum {$domain}Rules implements RuleIdentifier
 }
 PHP;
 
-        file_put_contents($path, $content . "\n");
+        if (@file_put_contents($path, $content . "\n") === false) {
+            throw new RuntimeException("Failed to write: {$path}");
+        }
     }
 
     private function appendEnumCase(string $path, string $ruleName): void
@@ -72,11 +82,17 @@ PHP;
             throw new RuntimeException("Failed to update enum file: {$path}");
         }
 
-        file_put_contents($path, $newContent);
+        if (@file_put_contents($path, $newContent) === false) {
+            throw new RuntimeException("Failed to write: {$path}");
+        }
     }
 
     private function ensureCatalogExists(string $baseNamespace, string $path): void
     {
+        if (file_exists($path) && !is_file($path)) {
+            throw new RuntimeException("Failed to read: {$path}");
+        }
+
         if (file_exists($path)) {
             return;
         }
@@ -95,7 +111,9 @@ return [
 ];
 PHP;
 
-        file_put_contents($path, $content . "\n");
+        if (@file_put_contents($path, $content . "\n") === false) {
+            throw new RuntimeException("Failed to write: {$path}");
+        }
     }
 
     private function appendCatalogEntry(string $path, string $ruleName, string $domain): void
@@ -124,6 +142,8 @@ PHP;
         }
 
         $newContent = substr($content, 0, $position) . $entry . "\n" . substr($content, $position);
-        file_put_contents($path, $newContent);
+        if (@file_put_contents($path, $newContent) === false) {
+            throw new RuntimeException("Failed to write: {$path}");
+        }
     }
 }

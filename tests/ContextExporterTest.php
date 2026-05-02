@@ -16,13 +16,16 @@ final class ContextExporterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->exportPath = sys_get_temp_dir() . '/itp-context-export-test-' . md5(static::class);
+        $this->exportPath = sys_get_temp_dir() . '/itp-context-export-test-' . bin2hex(random_bytes(8));
+        $this->removeGeneratedExampleContextFiles();
         $this->removeDirectory($this->exportPath);
     }
 
     protected function tearDown(): void
     {
         $this->removeDirectory($this->exportPath);
+        $this->removeDirectory($this->exportPath . '-result');
+        $this->removeGeneratedExampleContextFiles();
     }
 
     public function testExportWritesMarkdownDocumentsAndIndex(): void
@@ -109,6 +112,91 @@ final class ContextExporterTest extends TestCase
         }
     }
 
+    public function testExportRequiresAtLeastOneSourceDirectory(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('At least one source directory is required.');
+
+        (new ContextExporter())->export($this->exportPath, []);
+    }
+
+    public function testExportRejectsSourceDirectoriesWithoutPhpFiles(): void
+    {
+        mkdir($this->exportPath . '/empty', 0777, true);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('No PHP files found in the given source directories.');
+
+        (new ContextExporter())->export($this->exportPath, [$this->exportPath . '/empty']);
+    }
+
+    public function testExportReportsBrokenFilesAndContinues(): void
+    {
+        $brokenSourceDir = $this->exportPath . '/broken-source';
+        mkdir($brokenSourceDir, 0777, true);
+        $brokenFile = $brokenSourceDir . '/Broken.php';
+        file_put_contents($brokenFile, "<?php\nnamespace Broken;\nfinal class Broken {\n");
+
+        $report = (new ContextExporter())->export(
+            $this->exportPath . '-result',
+            [$brokenSourceDir, dirname(__DIR__) . '/src']
+        );
+
+        self::assertCount(1, $report->errors);
+        self::assertStringStartsWith($brokenFile . ': ', $report->errors[0]);
+        self::assertGreaterThan(0, $report->exportedDocumentCount);
+    }
+
+    public function testExportCreatesEmptyIndexWhenNoAnnotatedSymbolsExist(): void
+    {
+        (new ContextExporter())->export(
+            $this->exportPath,
+            [dirname(__DIR__) . '/examples/basic-domain/src/Tests']
+        );
+
+        $indexContent = (string) file_get_contents($this->exportPath . '/index.md');
+
+        self::assertStringContainsString('No annotated PHP symbols were found.', $indexContent);
+    }
+
+    public function testExportIgnoresMissingDirectoriesWhenOtherSourcesExist(): void
+    {
+        $report = (new ContextExporter())->export(
+            $this->exportPath,
+            ['/definitely/missing/path', dirname(__DIR__) . '/src']
+        );
+
+        self::assertSame([], $report->errors);
+        self::assertGreaterThan(0, $report->exportedDocumentCount);
+    }
+
+    public function testFindPhpFilesSkipsNonPhpEntries(): void
+    {
+        $sourceDir = $this->exportPath . '/mixed';
+        mkdir($sourceDir . '/nested', 0777, true);
+        file_put_contents($sourceDir . '/README.txt', 'ignore');
+        file_put_contents($sourceDir . '/nested/Example.php', "<?php\nfinal class MixedExample {}\n");
+
+        $method = new \ReflectionMethod(ContextExporter::class, 'findPhpFiles');
+        $method->setAccessible(true);
+
+        /** @var list<string> $files */
+        $files = $method->invoke(new ContextExporter(), [$sourceDir], []);
+
+        self::assertSame([$sourceDir . '/nested/Example.php'], $files);
+    }
+
+    public function testToRelativePathReturnsOriginalPathOutsideProjectRoot(): void
+    {
+        $method = new \ReflectionMethod(ContextExporter::class, 'toRelativePath');
+        $method->setAccessible(true);
+
+        self::assertSame(
+            '/tmp/outside-project.php',
+            $method->invoke(new ContextExporter(), '/tmp/outside-project.php')
+        );
+    }
+
     /**
      * @return array<string, string>
      */
@@ -146,6 +234,8 @@ final class ContextExporterTest extends TestCase
         );
 
         foreach ($iterator as $item) {
+            @chmod($item->getPathname(), 0777);
+
             if ($item->isDir()) {
                 rmdir($item->getPathname());
                 continue;
@@ -154,6 +244,17 @@ final class ContextExporterTest extends TestCase
             unlink($item->getPathname());
         }
 
+        @chmod($path, 0777);
         rmdir($path);
+    }
+
+    private function removeGeneratedExampleContextFiles(): void
+    {
+        foreach (['ExampleRules.php', 'ExampleCatalog.php'] as $file) {
+            $path = dirname(__DIR__) . '/src/Context/' . $file;
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
     }
 }

@@ -83,10 +83,7 @@ final class ContextResolver
      */
     private function resolveCatalogPath(ReflectionEnum $reflection, string $enumClass): string
     {
-        $file = $reflection->getFileName();
-        if ($file === false) {
-            throw new RuntimeException("Cannot resolve enum file path for {$enumClass}.");
-        }
+        $file = (string) $reflection->getFileName();
 
         if (!str_ends_with($file, 'Rules.php')) {
             throw new RuntimeException("Rule enum file must end with 'Rules.php': {$file}");

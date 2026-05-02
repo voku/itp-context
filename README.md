@@ -286,6 +286,7 @@ For small libraries, prefer a tiny export with a few high-value symbols over exh
 ```shell
 composer phpstan
 composer test
+# strict mutation run with uncovered code and example sources included
 composer infection
 ```
 

@@ -51,7 +51,7 @@
   "scripts": {
     "phpstan": "phpstan analyse --configuration=phpstan.neon.dist",
     "test": "phpunit",
-    "infection": "infection --configuration=infection.json5.dist"
+    "infection": "infection --configuration=infection.json5.dist --only-covering-test-cases --with-uncovered"
   },
   "extra": {
     "branch-alias": {
