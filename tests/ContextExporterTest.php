@@ -16,7 +16,7 @@ final class ContextExporterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->exportPath = sys_get_temp_dir() . '/itp-context-export-test-' . bin2hex(random_bytes(8));
+        $this->exportPath = sys_get_temp_dir() . '/itp-context-export-test-' . str_replace('.', '', uniqid('', true));
         $this->removeGeneratedExampleContextFiles();
         $this->removeDirectory($this->exportPath);
     }

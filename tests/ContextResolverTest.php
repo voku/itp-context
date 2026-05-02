@@ -16,7 +16,7 @@ final class ContextResolverTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->fixturePath = sys_get_temp_dir() . '/itp-context-resolver-test-' . bin2hex(random_bytes(8));
+        $this->fixturePath = sys_get_temp_dir() . '/itp-context-resolver-test-' . str_replace('.', '', uniqid('', true));
         mkdir($this->fixturePath, 0777, true);
     }
 
@@ -135,7 +135,7 @@ final class ContextResolverTest extends TestCase
 
     public function testResolveRejectsEvaluatedEnumsThatDoNotFollowTheRulesSuffixConvention(): void
     {
-        $namespace = 'EvalFixture' . bin2hex(random_bytes(4));
+        $namespace = 'EvalFixture' . str_replace('.', '', uniqid('', true));
         eval("namespace {$namespace}; enum EvalRules implements \\ItpContext\\Contract\\RuleIdentifier { case Example; }");
         $enumClass = $namespace . '\\EvalRules';
 
@@ -147,7 +147,7 @@ final class ContextResolverTest extends TestCase
 
     public function testResolveRejectsEnumsNotFollowingRulesSuffixConvention(): void
     {
-        $namespace = 'ItpContext\\Tests\\BadName' . bin2hex(random_bytes(4));
+        $namespace = 'ItpContext\\Tests\\BadName' . str_replace('.', '', uniqid('', true));
         $enumPath = $this->fixturePath . '/CustomEnum.php';
         file_put_contents($enumPath, <<<PHP
 <?php
@@ -172,7 +172,7 @@ PHP);
 
     private function defineFixture(string $name, string $enumBody, ?string $catalogBody): string
     {
-        $namespace = 'ItpContext\\Tests\\ResolverFixture' . bin2hex(random_bytes(4));
+        $namespace = 'ItpContext\\Tests\\ResolverFixture' . str_replace('.', '', uniqid('', true));
         $enumClass = $namespace . '\\' . $name . 'Rules';
         $enumPath = $this->fixturePath . '/' . $name . 'Rules.php';
 

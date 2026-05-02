@@ -13,7 +13,7 @@ final class GeneratorTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->generatedPath = sys_get_temp_dir() . '/itp-context-generator-test-' . bin2hex(random_bytes(8));
+        $this->generatedPath = sys_get_temp_dir() . '/itp-context-generator-test-' . str_replace('.', '', uniqid('', true));
         $this->removeDirectory($this->generatedPath);
     }
 
