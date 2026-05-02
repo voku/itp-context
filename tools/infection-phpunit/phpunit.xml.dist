@@ -11,4 +11,13 @@
             <directory>../../tests</directory>
         </testsuite>
     </testsuites>
+    <source>
+        <include>
+            <directory>../../src</directory>
+            <directory>../../examples/basic-domain/src</directory>
+        </include>
+        <exclude>
+            <directory>../../examples/basic-domain/src/Tests</directory>
+        </exclude>
+    </source>
 </phpunit>
