@@ -32,8 +32,7 @@ final class ExportWriter
         error_clear_last();
         $bytes = @file_put_contents($path, Frontmatter::render($meta, $body));
         if ($bytes === false) {
-            $detail = error_get_last();
-            $message = is_array($detail) ? ' (' . $detail['message'] . ')' : '';
+            $message = self::formatLastErrorMessage(error_get_last());
             throw new RuntimeException("Failed to write export file: {$path}{$message}");
         }
 
@@ -53,10 +52,20 @@ final class ExportWriter
         error_clear_last();
 
         if (!@mkdir($directory, 0755, true) && !is_dir($directory)) {
-            $detail = error_get_last();
-            $message = is_array($detail) ? ' (' . $detail['message'] . ')' : '';
+            $message = self::formatLastErrorMessage(error_get_last());
             throw new RuntimeException(sprintf('Directory "%s" was not created.%s', $directory, $message));
         }
+    }
+
+    private static function formatLastErrorMessage(mixed $detail): string
+    {
+        if (!is_array($detail)) {
+            return '';
+        }
+
+        $message = $detail['message'] ?? null;
+
+        return is_string($message) ? ' (' . $message . ')' : '';
     }
 
     private function normalizeSlug(string $slug): string

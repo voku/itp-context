@@ -146,8 +146,7 @@ PHP;
         error_clear_last();
 
         if (!@mkdir($path, 0777, true) && !is_dir($path)) {
-            $detail = error_get_last();
-            $message = is_array($detail) ? ' (' . $detail['message'] . ')' : '';
+            $message = self::formatLastErrorMessage(error_get_last());
             throw new RuntimeException("Failed to create directory: {$path}{$message}");
         }
     }
@@ -157,9 +156,19 @@ PHP;
         error_clear_last();
 
         if (@file_put_contents($path, $content) === false) {
-            $detail = error_get_last();
-            $message = is_array($detail) ? ' (' . $detail['message'] . ')' : '';
+            $message = self::formatLastErrorMessage(error_get_last());
             throw new RuntimeException("Failed to write: {$path}{$message}");
         }
+    }
+
+    private static function formatLastErrorMessage(mixed $detail): string
+    {
+        if (!is_array($detail)) {
+            return '';
+        }
+
+        $message = $detail['message'] ?? null;
+
+        return is_string($message) ? ' (' . $message . ')' : '';
     }
 }
