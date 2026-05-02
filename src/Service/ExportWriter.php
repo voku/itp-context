@@ -33,7 +33,7 @@ final class ExportWriter
         $bytes = @file_put_contents($path, Frontmatter::render($meta, $body));
         if ($bytes === false) {
             $detail = error_get_last();
-            $message = is_array($detail) && isset($detail['message']) ? ' (' . $detail['message'] . ')' : '';
+            $message = is_array($detail) ? ' (' . $detail['message'] . ')' : '';
             throw new RuntimeException("Failed to write export file: {$path}{$message}");
         }
 
@@ -54,7 +54,7 @@ final class ExportWriter
 
         if (!@mkdir($directory, 0755, true) && !is_dir($directory)) {
             $detail = error_get_last();
-            $message = is_array($detail) && isset($detail['message']) ? ' (' . $detail['message'] . ')' : '';
+            $message = is_array($detail) ? ' (' . $detail['message'] . ')' : '';
             throw new RuntimeException(sprintf('Directory "%s" was not created.%s', $directory, $message));
         }
     }

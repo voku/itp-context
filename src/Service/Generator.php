@@ -147,7 +147,7 @@ PHP;
 
         if (!@mkdir($path, 0777, true) && !is_dir($path)) {
             $detail = error_get_last();
-            $message = is_array($detail) && isset($detail['message']) ? ' (' . $detail['message'] . ')' : '';
+            $message = is_array($detail) ? ' (' . $detail['message'] . ')' : '';
             throw new RuntimeException("Failed to create directory: {$path}{$message}");
         }
     }
@@ -158,7 +158,7 @@ PHP;
 
         if (@file_put_contents($path, $content) === false) {
             $detail = error_get_last();
-            $message = is_array($detail) && isset($detail['message']) ? ' (' . $detail['message'] . ')' : '';
+            $message = is_array($detail) ? ' (' . $detail['message'] . ')' : '';
             throw new RuntimeException("Failed to write: {$path}{$message}");
         }
     }
