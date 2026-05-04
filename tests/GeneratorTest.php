@@ -32,6 +32,7 @@ final class GeneratorTest extends TestCase
         self::assertFileExists($this->generatedPath . '/ExampleCatalog.php');
         self::assertStringContainsString('case SecurityBoundary;', (string) file_get_contents($this->generatedPath . '/ExampleRules.php'));
         self::assertStringContainsString("'SecurityBoundary' => new RuleDef(", (string) file_get_contents($this->generatedPath . '/ExampleCatalog.php'));
+        self::assertStringContainsString("refs: ['docs/adr/security-boundary.md']", (string) file_get_contents($this->generatedPath . '/ExampleCatalog.php'));
     }
 
     private function removeDirectory(string $path): void

@@ -36,7 +36,7 @@ composer require voku/itp-context
 
 When architecture guidance only lives in ADRs and wikis, it drifts away from the code that is supposed to follow it.
 
-`itp-context` keeps the rule identifier in the code, the rule definition in a nearby catalog and the proof references in one typed structure. That gives you a compact way to:
+`itp-context` keeps the rule identifier in the code, the rule definition in a nearby catalog, and supporting context references in one typed structure. That gives you a compact way to:
 - attach architecture intent to classes and methods
 - validate whether enum cases and catalog entries still match
 - summarize relevant architecture context for one PHP file
@@ -70,6 +70,7 @@ enum ArchitectureRules implements RuleIdentifier
 
 Convention:
 - `ArchitectureRules.php` -> `ArchitectureCatalog.php`
+- use `refs` for the context you want nearby: ADRs, docs, design notes, diagrams, tickets or related code
 
 ```php
 <?php
@@ -86,7 +87,7 @@ return [
         statement: 'Use a dedicated view abstraction for rendering.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
-        refs: ['docs/adr/view-abstraction.md'],
+        refs: ['docs/adr/view-abstraction.md', 'docs/ui/rendering.md'],
     ),
     'I18n' => new RuleDef(
         statement: 'Use translated labels and locale-aware formatting.',
@@ -156,7 +157,7 @@ Example output:
 ### [INFO] Use a dedicated view abstraction for rendering.
 - **ID:** `Acme\Context\ArchitectureRules::ViewAbstraction`
 - **Owner:** Team-Architecture
-- **Refs:** docs/adr/view-abstraction.md
+- **Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md
 
 ## Method: `render`
 ### [INFO] Use translated labels and locale-aware formatting.
@@ -241,6 +242,8 @@ Your project-specific files stay in your own codebase, for example:
 - `src/Context/ArchitectureCatalog.php`
 
 A minimal example project is included under `examples/basic-domain`, and the repository's self-export snapshot lives under `docs/package-export`.
+
+The example project also includes sample context docs under `examples/basic-domain/docs/`, including ADR-style notes referenced from the catalog.
 
 ## CLI Tools
 

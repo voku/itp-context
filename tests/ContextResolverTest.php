@@ -19,6 +19,7 @@ final class ContextResolverTest extends TestCase
         self::assertInstanceOf(RuleDef::class, $definition);
         self::assertSame('Use a dedicated view abstraction for rendering.', $definition->statement);
         self::assertSame('Team-Architecture', $definition->owner);
+        self::assertSame(['docs/adr/view-abstraction.md', 'docs/ui/rendering.md'], $definition->refs);
     }
 
     public function testResolveReturnsPackageRuleDefinitionFromCatalog(): void

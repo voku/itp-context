@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- clarified that `refs` can point to any useful architecture context, including ADRs, docs and design notes
+- updated the generator and example catalog to use ADR-style paths as helpful default references
+- refreshed README guidance and example docs to show ADRs as one lightweight way to capture missing context
+
 ## 0.2.0
 
 - added `ContextExporter`, `ExportWriter`, `Frontmatter` and `ExportReport` for exporting agent-friendly markdown context files

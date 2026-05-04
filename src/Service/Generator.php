@@ -115,6 +115,7 @@ PHP;
         statement: 'TODO: Define rule statement.',
         tier: Tier::Standard,
         owner: 'Team-{$domain}',
+        refs: ['docs/adr/{$this->toKebabCase($ruleName)}.md'],
     ),
 PHP;
 
@@ -125,5 +126,12 @@ PHP;
 
         $newContent = substr($content, 0, $position) . $entry . "\n" . substr($content, $position);
         file_put_contents($path, $newContent);
+    }
+
+    private function toKebabCase(string $value): string
+    {
+        $value = preg_replace('/(?<!^)[A-Z]/', '-$0', $value) ?? $value;
+
+        return strtolower($value);
     }
 }

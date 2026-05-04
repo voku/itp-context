@@ -17,6 +17,8 @@ final class SummarizerTest extends TestCase
         self::assertStringContainsString('Context: DashboardView', $output);
         self::assertStringContainsString('ArchitectureRules::ViewAbstraction', $output);
         self::assertStringContainsString('ArchitectureRules::I18n', $output);
+        self::assertStringContainsString('**Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md', $output);
+        self::assertStringContainsString('**Refs:** docs/adr/i18n.md', $output);
     }
 
     public function testSummarizeContainsPackageRulesForOwnServices(): void
