@@ -2,10 +2,9 @@
 
 ## Unreleased
 
-- added first-class `adrs` support to `RuleDef` so ADR links can live beside rule metadata without overloading generic refs
-- surfaced ADRs in summaries, context export frontmatter and generated catalog stubs
-- updated the shipped example and README to show ADR-specific metadata
-- added sample ADR markdown files to the example project
+- clarified that `refs` can point to any useful architecture context, including ADRs, docs and design notes
+- updated the generator and example catalog to use ADR-style paths as helpful default references
+- refreshed README guidance and example docs to show ADRs as one lightweight way to capture missing context
 
 ## 0.2.0
 

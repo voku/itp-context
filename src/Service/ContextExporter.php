@@ -65,7 +65,6 @@ final class ContextExporter
                     'source_path' => $relativePath,
                     'kind' => $document['kind'],
                     'rule_ids' => $document['rule_ids'],
-                    'adrs' => $document['adrs'],
                 ],
                 body: $document['body'],
             );
@@ -102,7 +101,6 @@ final class ContextExporter
      *     fqcn: class-string,
      *     kind: string,
      *     rule_ids: list<string>,
-     *     adrs: list<string>,
      *     owners: list<string>,
      *     refs: list<string>,
      *     verified_by: list<string>,
@@ -138,7 +136,6 @@ final class ContextExporter
             'fqcn' => $symbol->fqcn,
             'kind' => $symbol->kind,
             'rule_ids' => $metadata['rule_ids'],
-            'adrs' => $metadata['adrs'],
             'owners' => $metadata['owners'],
             'refs' => $metadata['refs'],
             'verified_by' => $metadata['verified_by'],
@@ -151,7 +148,6 @@ final class ContextExporter
      * @param ReflectionClass<object> $reflection
      * @return array{
      *     rule_ids: list<string>,
-     *     adrs: list<string>,
      *     owners: list<string>,
      *     refs: list<string>,
      *     verified_by: list<string>,
@@ -161,14 +157,13 @@ final class ContextExporter
     private function collectMetadata(ReflectionClass $reflection): array
     {
         $ruleIds = [];
-        $adrs = [];
         $owners = [];
         $refs = [];
         $verifiedBy = [];
         $annotatedMethods = [];
 
         foreach ($reflection->getAttributes(Rule::class) as $attribute) {
-            $this->appendDefinitionMetadata($attribute, $ruleIds, $adrs, $owners, $refs, $verifiedBy);
+            $this->appendDefinitionMetadata($attribute, $ruleIds, $owners, $refs, $verifiedBy);
         }
 
         foreach ($reflection->getMethods() as $method) {
@@ -184,7 +179,7 @@ final class ContextExporter
             $annotatedMethods[] = $method->getName();
 
             foreach ($attributes as $attribute) {
-                $this->appendDefinitionMetadata($attribute, $ruleIds, $adrs, $owners, $refs, $verifiedBy);
+                $this->appendDefinitionMetadata($attribute, $ruleIds, $owners, $refs, $verifiedBy);
             }
         }
 
@@ -192,7 +187,6 @@ final class ContextExporter
 
         return [
             'rule_ids' => $this->uniqueSorted($ruleIds),
-            'adrs' => $this->uniqueSorted($adrs),
             'owners' => $this->uniqueSorted($owners),
             'refs' => $this->uniqueSorted($refs),
             'verified_by' => $this->uniqueSorted($verifiedBy),
@@ -203,7 +197,6 @@ final class ContextExporter
     /**
      * @param ReflectionAttribute<Rule> $attribute
      * @param list<string> $ruleIds
-     * @param list<string> $adrs
      * @param list<string> $owners
      * @param list<string> $refs
      * @param list<string> $verifiedBy
@@ -211,7 +204,6 @@ final class ContextExporter
     private function appendDefinitionMetadata(
         ReflectionAttribute $attribute,
         array &$ruleIds,
-        array &$adrs,
         array &$owners,
         array &$refs,
         array &$verifiedBy,
@@ -223,12 +215,6 @@ final class ContextExporter
         $definition = $this->resolver->resolve($id);
         if ($definition->owner !== null && trim($definition->owner) !== '') {
             $owners[] = $definition->owner;
-        }
-
-        foreach ($definition->adrs as $adr) {
-            if ($adr !== '') {
-                $adrs[] = $adr;
-            }
         }
 
         foreach ($definition->refs as $ref) {

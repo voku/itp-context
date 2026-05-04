@@ -94,9 +94,6 @@ final class Summarizer
                 if ($definition->verifiedBy !== []) {
                     $output .= '- **Proof:** ' . implode(', ', $definition->verifiedBy) . "\n";
                 }
-                if ($definition->adrs !== []) {
-                    $output .= '- **ADRs:** ' . implode(', ', $definition->adrs) . "\n";
-                }
                 if ($definition->refs !== []) {
                     $output .= '- **Refs:** ' . implode(', ', $definition->refs) . "\n";
                 }

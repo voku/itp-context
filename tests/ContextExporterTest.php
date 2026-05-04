@@ -44,11 +44,10 @@ final class ContextExporterTest extends TestCase
         $symbolContent = (string) file_get_contents($symbolExport);
         self::assertStringContainsString('source_path: "examples/basic-domain/src/DashboardView.php"', $symbolContent);
         self::assertStringContainsString('rule_ids:', $symbolContent);
-        self::assertStringContainsString('adrs:', $symbolContent);
-        self::assertStringContainsString('"docs/adr/view-abstraction.md"', $symbolContent);
-        self::assertStringContainsString('"docs/adr/i18n.md"', $symbolContent);
         self::assertStringContainsString('ArchitectureRules::ViewAbstraction', $symbolContent);
         self::assertStringContainsString('ArchitectureRules::I18n', $symbolContent);
+        self::assertStringContainsString('**Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md', $symbolContent);
+        self::assertStringContainsString('**Refs:** docs/adr/i18n.md', $symbolContent);
         self::assertStringContainsString('# Context: DashboardView', $symbolContent);
 
         $indexContent = (string) file_get_contents($this->exportPath . '/index.md');

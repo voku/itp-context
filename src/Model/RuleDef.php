@@ -12,7 +12,6 @@ final readonly class RuleDef
     /**
      * @param array<class-string> $verifiedBy
      * @param list<string> $refs
-     * @param list<string> $adrs
      */
     public function __construct(
         public string $statement,
@@ -21,7 +20,6 @@ final readonly class RuleDef
         public ?string $owner = null,
         public array $verifiedBy = [],
         public array $refs = [],
-        public array $adrs = [],
     ) {
         if (trim($statement) === '') {
             throw new LogicException('Rule statement cannot be empty.');

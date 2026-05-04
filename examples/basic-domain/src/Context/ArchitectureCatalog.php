@@ -13,13 +13,13 @@ return [
         statement: 'Use a dedicated view abstraction for rendering.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
-        adrs: ['docs/adr/view-abstraction.md'],
+        refs: ['docs/adr/view-abstraction.md', 'docs/ui/rendering.md'],
     ),
     'I18n' => new RuleDef(
         statement: 'Use locale-aware formatting and translated UI labels.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
         verifiedBy: [I18nTest::class],
-        adrs: ['docs/adr/i18n.md'],
+        refs: ['docs/adr/i18n.md'],
     ),
 ];

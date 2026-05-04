@@ -115,7 +115,7 @@ PHP;
         statement: 'TODO: Define rule statement.',
         tier: Tier::Standard,
         owner: 'Team-{$domain}',
-        adrs: ['docs/adr/{$this->toKebabCase($ruleName)}.md'],
+        refs: ['docs/adr/{$this->toKebabCase($ruleName)}.md'],
     ),
 PHP;
 

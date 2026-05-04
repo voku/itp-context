@@ -21,10 +21,6 @@ final class FrontmatterTest extends TestCase
                     'ItpContextExample\\Context\\ArchitectureRules::ViewAbstraction',
                     'ItpContextExample\\Context\\ArchitectureRules::I18n',
                 ],
-                'adrs' => [
-                    'docs/adr/view-abstraction.md',
-                    'docs/adr/i18n.md',
-                ],
             ],
             "# Context: DashboardView\n"
         );
@@ -41,13 +37,6 @@ final class FrontmatterTest extends TestCase
                 'ItpContextExample\\Context\\ArchitectureRules::I18n',
             ],
             $parsed['rule_ids']
-        );
-        self::assertSame(
-            [
-                'docs/adr/view-abstraction.md',
-                'docs/adr/i18n.md',
-            ],
-            $parsed['adrs']
         );
         self::assertSame("# Context: DashboardView\n", $parsed['body']);
     }
