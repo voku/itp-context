@@ -36,7 +36,7 @@ composer require voku/itp-context
 
 When architecture guidance only lives in ADRs and wikis, it drifts away from the code that is supposed to follow it.
 
-`itp-context` keeps the rule identifier in the code, the rule definition in a nearby catalog and the proof references in one typed structure. That gives you a compact way to:
+`itp-context` keeps the rule identifier in the code, the rule definition in a nearby catalog, and ADR/proof references in one typed structure. That gives you a compact way to:
 - attach architecture intent to classes and methods
 - validate whether enum cases and catalog entries still match
 - summarize relevant architecture context for one PHP file
@@ -70,6 +70,7 @@ enum ArchitectureRules implements RuleIdentifier
 
 Convention:
 - `ArchitectureRules.php` -> `ArchitectureCatalog.php`
+- use `adrs` for Architecture Decision Records and `refs` for other supporting links
 
 ```php
 <?php
@@ -86,14 +87,14 @@ return [
         statement: 'Use a dedicated view abstraction for rendering.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
-        refs: ['docs/adr/view-abstraction.md'],
+        adrs: ['docs/adr/view-abstraction.md'],
     ),
     'I18n' => new RuleDef(
         statement: 'Use translated labels and locale-aware formatting.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
         verifiedBy: ['tests/Unit/I18nTest.php'],
-        refs: ['docs/adr/i18n.md'],
+        adrs: ['docs/adr/i18n.md'],
     ),
 ];
 ```
@@ -156,14 +157,14 @@ Example output:
 ### [INFO] Use a dedicated view abstraction for rendering.
 - **ID:** `Acme\Context\ArchitectureRules::ViewAbstraction`
 - **Owner:** Team-Architecture
-- **Refs:** docs/adr/view-abstraction.md
+- **ADRs:** docs/adr/view-abstraction.md
 
 ## Method: `render`
 ### [INFO] Use translated labels and locale-aware formatting.
 - **ID:** `Acme\Context\ArchitectureRules::I18n`
 - **Owner:** Team-Architecture
 - **Proof:** tests/Unit/I18nTest.php
-- **Refs:** docs/adr/i18n.md
+- **ADRs:** docs/adr/i18n.md
 ```
 
 ### 6. Export agent-friendly context for a source tree
@@ -189,7 +190,7 @@ This writes:
 The export is intentionally lean:
 - annotate only the few symbols that carry important architecture context
 - use broad rules that stay stable as the code evolves
-- keep frontmatter small: `id`, `title`, `source_path`, `kind` and `rule_ids`
+- keep frontmatter small: `id`, `title`, `source_path`, `kind`, `rule_ids` and optional `adrs`
 
 This repository dogfoods that approach with a few high-signal `ItpContext\Context\PackageRules` annotations on core services, and a committed self-export snapshot lives under `docs/package-export/`.
 
@@ -241,6 +242,8 @@ Your project-specific files stay in your own codebase, for example:
 - `src/Context/ArchitectureCatalog.php`
 
 A minimal example project is included under `examples/basic-domain`, and the repository's self-export snapshot lives under `docs/package-export`.
+
+The example project also includes sample ADR markdown files under `examples/basic-domain/docs/adr/`.
 
 ## CLI Tools
 

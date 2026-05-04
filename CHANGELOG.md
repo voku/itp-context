@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- added first-class `adrs` support to `RuleDef` so ADR links can live beside rule metadata without overloading generic refs
+- surfaced ADRs in summaries, context export frontmatter and generated catalog stubs
+- updated the shipped example and README to show ADR-specific metadata
+- added sample ADR markdown files to the example project
+
 ## 0.2.0
 
 - added `ContextExporter`, `ExportWriter`, `Frontmatter` and `ExportReport` for exporting agent-friendly markdown context files
