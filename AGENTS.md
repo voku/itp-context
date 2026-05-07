@@ -4,6 +4,8 @@
 
 This package contains only framework-agnostic architecture context tooling under the `ItpContext\\` namespace.
 
+Portable coding-agent usage guidance lives in `docs/skills/itp-context.md`. Keep agent-specific entrypoint files as thin pointers to that shared repo-owned document.
+
 ## Boundaries
 
 - Keep host-project enums and catalogs out of `src/`.
