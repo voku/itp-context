@@ -245,6 +245,19 @@ A minimal example project is included under `examples/basic-domain`, and the rep
 
 The example project also includes sample context docs under `examples/basic-domain/docs/`, including ADR-style notes referenced from the catalog.
 
+## Portable agent skills
+
+This repository keeps one shared, repo-owned coding-agent skill under `docs/skills/itp-context.md`.
+
+Agent-specific entrypoints stay thin and point back to that file:
+- `AGENTS.md`
+- `.github/copilot-instructions.md`
+- `CODEX.md`
+- `CLAUDE.md`
+- `GEMINI.md`
+
+That keeps the actual guidance in one place while still exposing it to different agent runtimes.
+
 ## CLI Tools
 
 The package ships with four small CLI helpers.

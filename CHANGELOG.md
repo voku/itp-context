@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added a shared `docs/skills/itp-context.md` agent skill plus thin Copilot, Codex, Claude and Gemini entrypoint files
 - clarified that `refs` can point to any useful architecture context, including ADRs, docs and design notes
 - updated the generator and example catalog to use ADR-style paths as helpful default references
 - refreshed README guidance and example docs to show ADRs as one lightweight way to capture missing context
