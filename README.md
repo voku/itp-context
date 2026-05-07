@@ -2,7 +2,7 @@
 [![Total Downloads](https://poser.pugx.org/voku/itp-context/downloads)](https://packagist.org/packages/voku/itp-context)
 [![License](https://poser.pugx.org/voku/itp-context/license)](https://packagist.org/packages/voku/itp-context)
 
-# itp-context
+# 🎯 itp-context
 
 A small PHP library for attaching architecture rules to code via PHP attributes and resolving those rules from a matching catalog.
 
