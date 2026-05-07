@@ -17,9 +17,7 @@ final class Generator
         $baseDir = $baseDir !== null && $baseDir !== '' ? rtrim($baseDir, '/') : getcwd() . '/src/Context';
         $baseNamespace = $baseNamespace !== null && $baseNamespace !== '' ? trim($baseNamespace, '\\') : 'App\\Context';
 
-        if (!is_dir($baseDir) && !mkdir($baseDir, 0777, true) && !is_dir($baseDir)) {
-            throw new RuntimeException("Failed to create directory: {$baseDir}");
-        }
+        $this->ensureDirectoryExists($baseDir);
 
         $enumPath = $baseDir . '/' . $domain . 'Rules.php';
         $catalogPath = $baseDir . '/' . $domain . 'Catalog.php';
@@ -35,6 +33,8 @@ final class Generator
 
     private function ensureEnumExists(string $domain, string $baseNamespace, string $path): void
     {
+        $this->ensureFilePathIsReadable($path);
+
         if (file_exists($path)) {
             return;
         }
@@ -53,7 +53,7 @@ enum {$domain}Rules implements RuleIdentifier
 }
 PHP;
 
-        file_put_contents($path, $content . "\n");
+        $this->writeFile($path, $content . "\n");
     }
 
     private function appendEnumCase(string $path, string $ruleName): void
@@ -72,11 +72,13 @@ PHP;
             throw new RuntimeException("Failed to update enum file: {$path}");
         }
 
-        file_put_contents($path, $newContent);
+        $this->writeFile($path, $newContent);
     }
 
     private function ensureCatalogExists(string $baseNamespace, string $path): void
     {
+        $this->ensureFilePathIsReadable($path);
+
         if (file_exists($path)) {
             return;
         }
@@ -95,7 +97,7 @@ return [
 ];
 PHP;
 
-        file_put_contents($path, $content . "\n");
+        $this->writeFile($path, $content . "\n");
     }
 
     private function appendCatalogEntry(string $path, string $ruleName, string $domain): void
@@ -125,7 +127,53 @@ PHP;
         }
 
         $newContent = substr($content, 0, $position) . $entry . "\n" . substr($content, $position);
-        file_put_contents($path, $newContent);
+        $this->writeFile($path, $newContent);
+    }
+
+    private function ensureDirectoryExists(string $path): void
+    {
+        if (file_exists($path) && !is_dir($path)) {
+            throw new RuntimeException("Failed to create directory: {$path} (path exists but is not a directory)");
+        }
+
+        if (is_dir($path)) {
+            return;
+        }
+
+        error_clear_last();
+
+        if (!@mkdir($path, 0755, true) && !is_dir($path)) {
+            $message = self::formatLastErrorMessage(error_get_last());
+            throw new RuntimeException("Failed to create directory: {$path}{$message}");
+        }
+    }
+
+    private function ensureFilePathIsReadable(string $path): void
+    {
+        if (file_exists($path) && !is_file($path)) {
+            throw new RuntimeException("Failed to read: {$path}");
+        }
+    }
+
+    private function writeFile(string $path, string $content): void
+    {
+        error_clear_last();
+
+        if (@file_put_contents($path, $content) === false) {
+            $message = self::formatLastErrorMessage(error_get_last());
+            throw new RuntimeException("Failed to write: {$path}{$message}");
+        }
+    }
+
+    private static function formatLastErrorMessage(mixed $detail): string
+    {
+        if (!is_array($detail)) {
+            return '';
+        }
+
+        $message = $detail['message'] ?? null;
+
+        return is_string($message) ? ' (' . $message . ')' : '';
     }
 
     private function toKebabCase(string $value): string

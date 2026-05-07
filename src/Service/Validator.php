@@ -29,11 +29,7 @@ final class Validator
         foreach ($reflection->getCases() as $case) {
             try {
                 $identifier = $case->getValue();
-                if (!$identifier instanceof RuleIdentifier) {
-                    $errors[] = "❌ [{$case->getName()}] Enum case value does not implement RuleIdentifier.";
-                    continue;
-                }
-
+                /** @var RuleIdentifier $identifier */
                 $this->resolver->resolve($identifier);
             } catch (\Throwable $throwable) {
                 $errors[] = "❌ [{$case->getName()}] {$throwable->getMessage()}";

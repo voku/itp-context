@@ -26,17 +26,46 @@ final class ExportWriter
         $fileName = $this->normalizeSlug($slug) . '.md';
         $directory = $safeArea !== '' ? $this->outputDir . '/' . $safeArea : $this->outputDir;
 
-        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created.', $directory));
-        }
+        $this->ensureDirectoryExists($directory);
 
         $path = $directory . '/' . $fileName;
-        $bytes = file_put_contents($path, Frontmatter::render($meta, $body));
+        error_clear_last();
+        $bytes = @file_put_contents($path, Frontmatter::render($meta, $body));
         if ($bytes === false) {
-            throw new RuntimeException("Failed to write export file: {$path}");
+            $message = self::formatLastErrorMessage(error_get_last());
+            throw new RuntimeException("Failed to write export file: {$path}{$message}");
         }
 
         return $path;
+    }
+
+    private function ensureDirectoryExists(string $directory): void
+    {
+        if (file_exists($directory) && !is_dir($directory)) {
+            throw new RuntimeException(sprintf('Directory "%s" exists but is not a directory.', $directory));
+        }
+
+        if (is_dir($directory)) {
+            return;
+        }
+
+        error_clear_last();
+
+        if (!@mkdir($directory, 0755, true) && !is_dir($directory)) {
+            $message = self::formatLastErrorMessage(error_get_last());
+            throw new RuntimeException(sprintf('Directory "%s" was not created.%s', $directory, $message));
+        }
+    }
+
+    private static function formatLastErrorMessage(mixed $detail): string
+    {
+        if (!is_array($detail)) {
+            return '';
+        }
+
+        $message = $detail['message'] ?? null;
+
+        return is_string($message) ? ' (' . $message . ')' : '';
     }
 
     private function normalizeSlug(string $slug): string

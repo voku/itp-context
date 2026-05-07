@@ -84,6 +84,7 @@ final class ContextResolver
     private function resolveCatalogPath(ReflectionEnum $reflection, string $enumClass): string
     {
         $file = $reflection->getFileName();
+
         if ($file === false) {
             throw new RuntimeException("Cannot resolve enum file path for {$enumClass}.");
         }

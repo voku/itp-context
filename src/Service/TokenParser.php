@@ -12,6 +12,10 @@ final class TokenParser
 {
     public function getFirstSymbolFromFile(string $filePath): ?ParsedSymbol
     {
+        if (!is_file($filePath) || !is_readable($filePath)) {
+            return null;
+        }
+
         $code = file_get_contents($filePath);
         if ($code === false) {
             return null;

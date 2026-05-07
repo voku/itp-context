@@ -1,0 +1,31 @@
+{
+  "$schema": "https://infection.github.io/schema.json",
+  "source": {
+    "directories": [
+      "src",
+      "examples/basic-domain/src"
+    ],
+    "excludes": [
+      "examples/basic-domain/src/Tests"
+    ]
+  },
+  "logs": {
+    "github": true,
+    "text": "infection.log"
+  },
+  "tmpDir": ".infection",
+  "threads": "max",
+  "phpUnit": {
+    "configDir": "tools/infection-phpunit",
+    "customPath": "vendor/bin/phpunit"
+  },
+  "phpStan": {
+    "configDir": ".",
+    "customPath": "vendor/bin/phpstan"
+  },
+  "staticAnalysisTool": "phpstan",
+  "staticAnalysisToolOptions": "--memory-limit=1G",
+  "testFrameworkOptions": "--colors=never --do-not-cache-result",
+  "minMsi": 95,
+  "minCoveredMsi": 100
+}

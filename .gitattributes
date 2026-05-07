@@ -9,4 +9,6 @@
 /.whitesource export-ignore
 /phpstan.neon.dist export-ignore
 /phpunit.xml.dist export-ignore
+/infection.json5.dist export-ignore
+/tools export-ignore
 renovate.json export-ignore

@@ -3,4 +3,6 @@
 /.phpunit.cache/
 /.phpunit.result.cache
 /.phpstan/
+/.infection/
+/infection.log
 /.idea/

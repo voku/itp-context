@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="../../tests/bootstrap.php"
+         cacheDirectory="../../.phpunit.cache"
+         colors="true"
+         executionOrder="default"
+         failOnRisky="true"
+         failOnWarning="true"
+         beStrictAboutOutputDuringTests="true">
+    <testsuites>
+        <testsuite name="itp-context">
+            <directory>../../tests</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>../../src</directory>
+            <directory>../../examples/basic-domain/src</directory>
+        </include>
+        <exclude>
+            <directory>../../examples/basic-domain/src/Tests</directory>
+        </exclude>
+    </source>
+</phpunit>
