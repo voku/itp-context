@@ -12,4 +12,6 @@ enum PackageRules implements RuleIdentifier
     case CatalogByConvention;
     case TokenFirstDiscovery;
     case AgentFriendlyMarkdown;
+    case DegradedDiscovery;
+    case DiscoveryMetadata;
 }

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace ItpContext\Service;
 
+use ItpContext\Attribute\Rule;
+use ItpContext\Context\PackageRules;
 use ItpContext\Contract\RuleIdentifier;
 use ReflectionEnum;
 
+#[Rule(PackageRules::CatalogByConvention)]
 final class Validator
 {
     public function __construct(private ContextResolver $resolver = new ContextResolver())

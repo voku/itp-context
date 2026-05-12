@@ -8,14 +8,19 @@ require $root . '/src/Contract/RuleIdentifier.php';
 require $root . '/src/Attribute/Rule.php';
 require $root . '/src/Context/PackageRules.php';
 require $root . '/src/Enum/Tier.php';
+require $root . '/src/Model/ContextDocument.php';
+require $root . '/src/Model/ContextQueryResult.php';
 require $root . '/src/Model/ExportReport.php';
 require $root . '/src/Model/RuleDef.php';
+require $root . '/src/Model/RuleTarget.php';
 require $root . '/src/Service/ParsedSymbol.php';
 require $root . '/src/Service/TokenParser.php';
 require $root . '/src/Service/ContextResolver.php';
 require $root . '/src/Service/Frontmatter.php';
 require $root . '/src/Service/ExportWriter.php';
 require $root . '/src/Service/Validator.php';
+require $root . '/src/Service/ContextReader.php';
+require $root . '/src/Service/ContextQuery.php';
 require $root . '/src/Service/Summarizer.php';
 require $root . '/src/Service/ContextExporter.php';
 require $root . '/src/Service/Generator.php';
@@ -101,7 +106,7 @@ if ($exitCode !== 0) {
     exit(1);
 }
 
-if (!isset($output[0]) || !str_contains($output[0], 'Exported 3 context documents')) {
+if (!isset($output[0]) || !str_contains($output[0], 'Exported 7 context documents')) {
     fwrite(STDERR, "Context export CLI produced unexpected output.\n");
     exit(1);
 }
@@ -110,8 +115,31 @@ $frontmatter = ItpContext\Service\Frontmatter::parse(
     (string) file_get_contents($exportBaseDir . '/php/ItpContext_Service_ContextExporter.md')
 );
 
-if (($frontmatter['source_path'] ?? null) !== 'src/Service/ContextExporter.php' || !file_exists($exportBaseDir . '/index.md')) {
+if (
+    ($frontmatter['source_path'] ?? null) !== 'src/Service/ContextExporter.php'
+    ||
+    ($frontmatter['owners'] ?? []) !== []
+    ||
+    !file_exists($exportBaseDir . '/index.md')
+) {
     fwrite(STDERR, "Context export did not create the expected files.\n");
+    exit(1);
+}
+
+$queryCommand = escapeshellarg(PHP_BINARY)
+    . ' '
+    . escapeshellarg($root . '/bin/itp-context-query')
+    . ' '
+    . escapeshellarg($exportBaseDir)
+    . ' --rule-id='
+    . escapeshellarg('ItpContext\\Context\\PackageRules::DiscoveryMetadata');
+
+$queryOutput = [];
+$queryExitCode = 0;
+exec($queryCommand, $queryOutput, $queryExitCode);
+
+if ($queryExitCode !== 0 || !isset($queryOutput[0]) || !str_contains($queryOutput[0], 'ItpContext\\Service\\ContextExporter')) {
+    fwrite(STDERR, "Context query CLI produced unexpected output.\n");
     exit(1);
 }
 

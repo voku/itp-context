@@ -6,7 +6,7 @@ Use this package to keep architecture context close to PHP code in a compact, ty
 
 - Define a project-owned enum that implements `ItpContext\Contract\RuleIdentifier`.
 - Add the matching `*Catalog.php` file next to the enum.
-- Attach `#[ItpContext\Attribute\Rule(...)]` to the few classes or methods where architecture context changes implementation choices.
+- Attach `#[ItpContext\Attribute\Rule(...)]` to the few classes, methods or functions where architecture context changes implementation choices.
 - Keep rules broad, stable and high-signal instead of tagging every symbol.
 
 ## What to reach for
@@ -14,6 +14,7 @@ Use this package to keep architecture context close to PHP code in a compact, ty
 - `ItpContext\Service\Validator` checks that the enum and sibling catalog still match.
 - `ItpContext\Service\Summarizer` renders the relevant rules for one PHP file.
 - `ItpContext\Service\ContextExporter` writes a compact markdown tree for annotated symbols.
+- `ItpContext\Service\ContextQuery` searches exported markdown context by rule IDs, owners, refs, proof and free text.
 - The CLI wrappers in `bin/` are thin entrypoints around those services.
 
 ## Authoring guidance

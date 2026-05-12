@@ -7,8 +7,8 @@ namespace ItpContext\Service;
 final readonly class ParsedSymbol
 {
     /**
-     * @param ''|'class'|'enum'|'interface'|'trait' $kind
-     * @param class-string $fqcn
+     * @param ''|'class'|'enum'|'function'|'interface'|'trait' $kind
+     * @param string $fqcn
      */
     public function __construct(
         public string $kind,

@@ -47,6 +47,9 @@ final class ContextExporterTest extends TestCase
         $symbolContent = (string) file_get_contents($symbolExport);
         self::assertStringContainsString('source_path: "examples/basic-domain/src/DashboardView.php"', $symbolContent);
         self::assertStringContainsString('rule_ids:', $symbolContent);
+        self::assertStringContainsString('owners:', $symbolContent);
+        self::assertStringContainsString('annotated_methods:', $symbolContent);
+        self::assertStringContainsString('rule_count: 2', $symbolContent);
         self::assertStringContainsString('ArchitectureRules::ViewAbstraction', $symbolContent);
         self::assertStringContainsString('ArchitectureRules::I18n', $symbolContent);
         self::assertStringContainsString('**Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md', $symbolContent);
@@ -55,6 +58,8 @@ final class ContextExporterTest extends TestCase
 
         $indexContent = (string) file_get_contents($this->exportPath . '/index.md');
         self::assertStringContainsString('[ItpContextExample\\DashboardView](php/ItpContextExample_DashboardView.md)', $indexContent);
+        self::assertStringContainsString('owners: Team-Architecture', $indexContent);
+        self::assertStringContainsString('annotated methods: `render`', $indexContent);
     }
 
     public function testExportHonorsExcludedPaths(): void
@@ -80,12 +85,18 @@ final class ContextExporterTest extends TestCase
         );
 
         self::assertSame([], $report->errors);
-        self::assertSame(3, $report->exportedDocumentCount);
+        self::assertSame(7, $report->exportedDocumentCount);
         self::assertSame(
             'src/Service/ContextExporter.php',
             Frontmatter::parse(
                 (string) file_get_contents($this->exportPath . '/php/ItpContext_Service_ContextExporter.md')
             )['source_path']
+        );
+        self::assertSame(
+            ['ItpContext\\Context\\PackageRules::AgentFriendlyMarkdown', 'ItpContext\\Context\\PackageRules::DiscoveryMetadata'],
+            Frontmatter::parse(
+                (string) file_get_contents($this->exportPath . '/php/ItpContext_Service_ContextExporter.md')
+            )['rule_ids']
         );
         self::assertStringContainsString(
             PackageRules::AgentFriendlyMarkdown->name,
@@ -144,8 +155,7 @@ final class ContextExporterTest extends TestCase
             [$brokenSourceDir, dirname(__DIR__) . '/src']
         );
 
-        self::assertCount(1, $report->errors);
-        self::assertStringStartsWith($brokenFile . ': ', $report->errors[0]);
+        self::assertSame([], $report->errors);
         self::assertGreaterThan(0, $report->exportedDocumentCount);
     }
 
@@ -172,6 +182,37 @@ final class ContextExporterTest extends TestCase
         self::assertGreaterThan(0, $report->exportedDocumentCount);
     }
 
+    public function testExportCreatesSeparateDocumentsForAnnotatedFunctions(): void
+    {
+        $sourceDir = $this->exportPath . '/functions';
+        mkdir($sourceDir, 0777, true);
+        file_put_contents($sourceDir . '/Functions.php', <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace ItpContext\Tests\Fixtures;
+
+use ItpContext\Attribute\Rule;
+use ItpContextExample\Context\ArchitectureRules;
+
+#[Rule(ArchitectureRules::ViewAbstraction)]
+function helper(): string
+{
+    return 'ok';
+}
+PHP);
+
+        $report = (new ContextExporter())->export($this->exportPath . '-result', [$sourceDir]);
+
+        self::assertSame(1, $report->exportedDocumentCount);
+        self::assertFileExists($this->exportPath . '-result/php/function_ItpContext_Tests_Fixtures_helper.md');
+        self::assertStringContainsString(
+            '# Context: function `ItpContext\Tests\Fixtures\helper()`',
+            (string) file_get_contents($this->exportPath . '-result/php/function_ItpContext_Tests_Fixtures_helper.md')
+        );
+    }
+
     public function testFindPhpFilesSkipsNonPhpEntries(): void
     {
         $sourceDir = $this->exportPath . '/mixed';
@@ -188,14 +229,14 @@ final class ContextExporterTest extends TestCase
         self::assertSame([$sourceDir . '/nested/Example.php'], $files);
     }
 
-    public function testToRelativePathReturnsOriginalPathOutsideProjectRoot(): void
+    public function testReaderToRelativePathReturnsOriginalPathOutsideProjectRoot(): void
     {
-        $method = new \ReflectionMethod(ContextExporter::class, 'toRelativePath');
+        $method = new \ReflectionMethod(\ItpContext\Service\ContextReader::class, 'toRelativePath');
         $method->setAccessible(true);
 
         self::assertSame(
             '/tmp/outside-project.php',
-            $method->invoke(new ContextExporter(), '/tmp/outside-project.php')
+            $method->invoke(new \ItpContext\Service\ContextReader(), '/tmp/outside-project.php')
         );
     }
 
