@@ -5,6 +5,7 @@ source_path: "src/Service/TokenParser.php"
 kind: "class"
 rule_ids:
   - "ItpContext\\Context\\PackageRules::TokenFirstDiscovery"
+rule_count: 1
 ---
 
 # Context: TokenParser
