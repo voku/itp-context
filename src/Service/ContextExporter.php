@@ -6,6 +6,7 @@ namespace ItpContext\Service;
 
 use ItpContext\Attribute\Rule;
 use ItpContext\Context\PackageRules;
+use ItpContext\Contract\ContextDocumentReader;
 use ItpContext\Model\ContextDocument;
 use ItpContext\Model\ExportReport;
 use RuntimeException;
@@ -15,7 +16,7 @@ use RuntimeException;
 final class ContextExporter
 {
     public function __construct(
-        private ContextReader $reader = new ContextReader(),
+        private ContextDocumentReader $reader = new ContextReader(),
     ) {
     }
 

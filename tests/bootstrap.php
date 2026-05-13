@@ -9,6 +9,7 @@ if (file_exists($autoload)) {
 }
 
 require dirname(__DIR__) . '/src/Contract/RuleIdentifier.php';
+require dirname(__DIR__) . '/src/Contract/ContextDocumentReader.php';
 require dirname(__DIR__) . '/src/Attribute/Rule.php';
 require dirname(__DIR__) . '/src/Context/PackageRules.php';
 require dirname(__DIR__) . '/src/Enum/Tier.php';

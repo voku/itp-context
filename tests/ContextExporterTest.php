@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ItpContext\Tests;
 
 use ItpContext\Context\PackageRules;
+use ItpContext\Contract\ContextDocumentReader;
 use ItpContext\Model\ExportReport;
 use ItpContext\Service\ContextExporter;
 use ItpContext\Service\Frontmatter;
@@ -150,16 +151,19 @@ final class ContextExporterTest extends TestCase
         $brokenFile = $brokenSourceDir . '/Broken.php';
         file_put_contents($brokenFile, "<?php\nnamespace Broken;\nfinal class Broken {\n");
 
-        // Simulate a reader failure so the exporter error path stays mutation-covered.
-        $reader = new class extends \ItpContext\Service\ContextReader
+        $reader = new class ($brokenFile) implements ContextDocumentReader
         {
+            public function __construct(private string $brokenFile)
+            {
+            }
+
             public function read(string $filePath): array
             {
-                if (str_contains($filePath, 'Broken.php')) {
+                if ($filePath === $this->brokenFile) {
                     throw new \RuntimeException('Fixture failure.');
                 }
 
-                return parent::read($filePath);
+                return (new \ItpContext\Service\ContextReader())->read($filePath);
             }
         };
 

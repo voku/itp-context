@@ -6,6 +6,7 @@ namespace ItpContext\Service;
 
 use ItpContext\Attribute\Rule;
 use ItpContext\Context\PackageRules;
+use ItpContext\Contract\ContextDocumentReader;
 use ItpContext\Contract\RuleIdentifier;
 use ItpContext\Model\ContextDocument;
 use ItpContext\Model\RuleDef;
@@ -14,10 +15,9 @@ use ItpContext\Model\RuleTarget;
 /**
  * Reads context documents directly from source files so summaries and exports
  * still work for multiple symbols, functions, and partially autoloadable code.
- * The class stays extendable so tests can inject narrow failure-oriented doubles.
  */
 #[Rule(PackageRules::DegradedDiscovery)]
-class ContextReader
+final class ContextReader implements ContextDocumentReader
 {
     public function __construct(
         private ContextResolver $resolver = new ContextResolver(),

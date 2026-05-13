@@ -5,6 +5,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__, 2);
 
 require $root . '/src/Contract/RuleIdentifier.php';
+require $root . '/src/Contract/ContextDocumentReader.php';
 require $root . '/src/Attribute/Rule.php';
 require $root . '/src/Context/PackageRules.php';
 require $root . '/src/Enum/Tier.php';
