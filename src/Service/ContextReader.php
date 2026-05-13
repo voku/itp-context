@@ -11,6 +11,10 @@ use ItpContext\Model\ContextDocument;
 use ItpContext\Model\RuleDef;
 use ItpContext\Model\RuleTarget;
 
+/**
+ * Reads context documents directly from source files so summaries and exports
+ * still work for multiple symbols, functions, and partially autoloadable code.
+ */
 #[Rule(PackageRules::DegradedDiscovery)]
 class ContextReader
 {
@@ -163,7 +167,8 @@ class ContextReader
         array &$owners,
         array &$refs,
         array &$verifiedBy,
-    ): void {
+    ): void
+    {
         if ($definition->owner !== null && trim($definition->owner) !== '') {
             $owners[] = $definition->owner;
         }

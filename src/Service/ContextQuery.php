@@ -12,6 +12,9 @@ use ItpContext\Model\ContextQueryResult;
 final class ContextQuery
 {
     /**
+     * Search exported context documents and ignore empty filter values so callers
+     * can compose queries incrementally without pre-normalizing input.
+     *
      * @param array{
      *     rule_id?: string,
      *     owner?: string,
