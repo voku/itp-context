@@ -78,11 +78,10 @@ final class ContextQuery
     private function isDocumentMatch(array $document, array $filters): bool
     {
         foreach ($filters as $key => $value) {
-            if (trim($value) === '') {
+            $value = trim($value);
+            if ($value === '') {
                 continue;
             }
-
-            $value = trim($value);
 
             if ($key === 'rule_id' && !$this->containsValue($document['rule_ids'] ?? [], $value)) {
                 return false;

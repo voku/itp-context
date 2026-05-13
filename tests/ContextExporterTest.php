@@ -153,8 +153,11 @@ final class ContextExporterTest extends TestCase
 
         $reader = new class ($brokenFile) implements ContextDocumentReader
         {
+            private \ItpContext\Service\ContextReader $reader;
+
             public function __construct(private string $brokenFile)
             {
+                $this->reader = new \ItpContext\Service\ContextReader();
             }
 
             public function read(string $filePath): array
@@ -163,7 +166,7 @@ final class ContextExporterTest extends TestCase
                     throw new \RuntimeException('Fixture failure.');
                 }
 
-                return (new \ItpContext\Service\ContextReader())->read($filePath);
+                return $this->reader->read($filePath);
             }
         };
 
