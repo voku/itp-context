@@ -12,7 +12,7 @@ use ItpContext\Model\RuleDef;
 use ItpContext\Model\RuleTarget;
 
 #[Rule(PackageRules::DegradedDiscovery)]
-final class ContextReader
+class ContextReader
 {
     public function __construct(
         private ContextResolver $resolver = new ContextResolver(),

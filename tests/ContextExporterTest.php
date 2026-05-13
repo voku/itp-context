@@ -150,12 +150,24 @@ final class ContextExporterTest extends TestCase
         $brokenFile = $brokenSourceDir . '/Broken.php';
         file_put_contents($brokenFile, "<?php\nnamespace Broken;\nfinal class Broken {\n");
 
-        $report = (new ContextExporter())->export(
+        $reader = new class extends \ItpContext\Service\ContextReader
+        {
+            public function read(string $filePath): array
+            {
+                if (str_contains($filePath, 'Broken.php')) {
+                    throw new \RuntimeException('Fixture failure.');
+                }
+
+                return parent::read($filePath);
+            }
+        };
+
+        $report = (new ContextExporter($reader))->export(
             $this->exportPath . '-result',
             [$brokenSourceDir, dirname(__DIR__) . '/src']
         );
 
-        self::assertSame([], $report->errors);
+        self::assertSame([$brokenFile . ': Fixture failure.'], $report->errors);
         self::assertGreaterThan(0, $report->exportedDocumentCount);
     }
 
