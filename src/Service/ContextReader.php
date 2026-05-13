@@ -14,6 +14,7 @@ use ItpContext\Model\RuleTarget;
 /**
  * Reads context documents directly from source files so summaries and exports
  * still work for multiple symbols, functions, and partially autoloadable code.
+ * The class stays extendable so tests can inject narrow failure-oriented doubles.
  */
 #[Rule(PackageRules::DegradedDiscovery)]
 class ContextReader

@@ -150,6 +150,7 @@ final class ContextExporterTest extends TestCase
         $brokenFile = $brokenSourceDir . '/Broken.php';
         file_put_contents($brokenFile, "<?php\nnamespace Broken;\nfinal class Broken {\n");
 
+        // Simulate a reader failure so the exporter error path stays mutation-covered.
         $reader = new class extends \ItpContext\Service\ContextReader
         {
             public function read(string $filePath): array
