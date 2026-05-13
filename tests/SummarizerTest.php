@@ -61,7 +61,7 @@ final class SummarizerTest extends TestCase
         $path = $this->writeFixtureFile('NoSymbol.php', "<?php\n\$value = 1;\n");
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('No class/interface/trait/enum found in file.');
+        $this->expectExceptionMessage('No class/interface/trait/enum/function found in file.');
 
         (new Summarizer())->summarize($path);
     }
@@ -84,7 +84,7 @@ final class SummarizerTest extends TestCase
         self::assertStringContainsString('⚠ Error:', $output);
     }
 
-    public function testSummarizeRejectsNonAutoloadableSymbols(): void
+    public function testSummarizeFallsBackToRawAnnotationsForNonAutoloadableSymbols(): void
     {
         $path = $this->writeFixtureFile('UnknownSubject.php', <<<PHP
 <?php
@@ -93,15 +93,61 @@ declare(strict_types=1);
 
 namespace UnknownFixture;
 
+use ItpContext\Attribute\Rule;
+use ItpContextExample\Context\ArchitectureRules;
+
+#[Rule(ArchitectureRules::ViewAbstraction)]
 final class UnknownSubject
 {
 }
 PHP);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Symbol not autoloadable: UnknownFixture\\UnknownSubject');
+        $output = (new Summarizer())->summarize($path);
 
-        (new Summarizer())->summarize($path);
+        self::assertStringContainsString('Context: UnknownSubject', $output);
+        self::assertStringContainsString('ArchitectureRules::ViewAbstraction', $output);
+        self::assertStringContainsString('Use a dedicated view abstraction for rendering.', $output);
+    }
+
+    public function testSummarizeIncludesMultipleSymbolsAndFunctionsFromOneFile(): void
+    {
+        $path = $this->writeFixtureFile('MultiSymbol.php', <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace ItpContext\Tests\Fixtures;
+
+use ItpContext\Attribute\Rule;
+use ItpContextExample\Context\ArchitectureRules;
+
+#[Rule(ArchitectureRules::ViewAbstraction)]
+function render_dashboard(): string
+{
+    return 'ok';
+}
+
+final class Helper
+{
+}
+
+#[Rule(ArchitectureRules::ViewAbstraction)]
+final class DashboardPresenter
+{
+    #[Rule(ArchitectureRules::I18n)]
+    public function render(): string
+    {
+        return 'ok';
+    }
+}
+PHP);
+
+        $output = (new Summarizer())->summarize($path);
+
+        self::assertStringContainsString('Context: function `ItpContext\Tests\Fixtures\render_dashboard()`', $output);
+        self::assertStringContainsString('Context: Helper', $output);
+        self::assertStringContainsString('Context: DashboardPresenter', $output);
+        self::assertStringContainsString('## Method: `render`', $output);
     }
 
     public function testHandleIsPublic(): void

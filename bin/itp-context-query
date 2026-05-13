@@ -1,0 +1,78 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloadPath = $GLOBALS['_composer_autoload_path'] ?? dirname(__DIR__) . '/vendor/autoload.php';
+
+if (!is_string($autoloadPath) || !file_exists($autoloadPath)) {
+    fwrite(STDERR, "Autoload file not found.\n");
+    exit(1);
+}
+
+require $autoloadPath;
+
+$exportDir = $argv[1] ?? null;
+if ($exportDir === null || $exportDir === '') {
+    fwrite(STDERR, "Usage: vendor/bin/itp-context-query <export-dir> [--rule-id=id] [--owner=owner] [--ref=ref] [--verified-by=proof] [--source-path=path] [--kind=kind] [--text=query]\n");
+    exit(1);
+}
+
+$filters = [];
+
+foreach (array_slice($argv, 2) as $argument) {
+    foreach ([
+        '--rule-id=' => 'rule_id',
+        '--owner=' => 'owner',
+        '--ref=' => 'ref',
+        '--verified-by=' => 'verified_by',
+        '--source-path=' => 'source_path',
+        '--kind=' => 'kind',
+        '--text=' => 'text',
+    ] as $prefix => $key) {
+        if (!str_starts_with($argument, $prefix)) {
+            continue;
+        }
+
+        $value = substr($argument, strlen($prefix));
+        if ($value !== false && $value !== '') {
+            $filters[$key] = $value;
+        }
+    }
+}
+
+try {
+    $results = (new ItpContext\Service\ContextQuery())->search($exportDir, $filters);
+} catch (Throwable $throwable) {
+    fwrite(STDERR, $throwable->getMessage() . "\n");
+    exit(1);
+}
+
+if ($results === []) {
+    echo "No matching context documents found.\n";
+    exit(0);
+}
+
+foreach ($results as $result) {
+    echo '- ' . $result->title . ' (' . $result->kind . ') - ' . $result->sourcePath . PHP_EOL;
+
+    if ($result->ruleIds !== []) {
+        echo '  rules: ' . implode(', ', $result->ruleIds) . PHP_EOL;
+    }
+
+    if ($result->owners !== []) {
+        echo '  owners: ' . implode(', ', $result->owners) . PHP_EOL;
+    }
+
+    if ($result->refs !== []) {
+        echo '  refs: ' . implode(', ', $result->refs) . PHP_EOL;
+    }
+
+    if ($result->verifiedBy !== []) {
+        echo '  proof: ' . implode(', ', $result->verifiedBy) . PHP_EOL;
+    }
+
+    if ($result->annotatedMethods !== []) {
+        echo '  annotated methods: ' . implode(', ', $result->annotatedMethods) . PHP_EOL;
+    }
+}

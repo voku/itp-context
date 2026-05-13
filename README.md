@@ -8,11 +8,12 @@ A small PHP library for attaching architecture rules to code via PHP attributes 
 
 It gives you:
 - typed rule identifiers via enums
-- repeatable `#[Rule(...)]` attributes for classes and methods
+- repeatable `#[Rule(...)]` attributes for classes, methods and functions
 - rule catalogs with ownership, rationale, references and proof metadata
 - validation helpers for stale or orphaned catalog entries
-- summary output for annotated PHP symbols
-- compact markdown context exports for coding agents and repository assistants
+- summary output for annotated PHP symbols, including multiple symbols per file
+- compact markdown context exports with searchable metadata for coding agents and repository assistants
+- a small query helper for searching exported context by rule, owner, proof, refs or free text
 - a small generator for bootstrapping new rule enums and catalogs
 
 ## Index
@@ -37,7 +38,7 @@ composer require voku/itp-context
 When architecture guidance only lives in ADRs and wikis, it drifts away from the code that is supposed to follow it.
 
 `itp-context` keeps the rule identifier in the code, the rule definition in a nearby catalog, and supporting context references in one typed structure. That gives you a compact way to:
-- attach architecture intent to classes and methods
+- attach architecture intent to classes, methods and functions
 - validate whether enum cases and catalog entries still match
 - summarize relevant architecture context for one PHP file
 
@@ -194,7 +195,7 @@ The export is intentionally lean:
 
 This repository dogfoods that approach with a few high-signal `ItpContext\Context\PackageRules` annotations on core services, and a committed self-export snapshot lives under `docs/package-export/`.
 
-That `docs/package-export/` tree is meant to be a ready-made reference for coding agents: it shows the compact export shape, the small set of package rules and the level of abstraction that keeps context useful without wasting tokens.
+That `docs/package-export/` tree is meant to be a ready-made reference for coding agents: it shows the compact export shape, the searchable metadata (`owners`, `refs`, `verified_by`, `annotated_methods`) and the level of abstraction that keeps context useful without wasting tokens.
 
 ## Local Development
 
@@ -231,6 +232,7 @@ After that the package CLIs are available in the consumer project via:
 vendor/bin/itp-context-validate 'Acme\Context\ArchitectureRules'
 vendor/bin/itp-context-summarize src/Ui/DashboardView.php
 vendor/bin/itp-context-export var/itp-context src --exclude=vendor --exclude=tests
+vendor/bin/itp-context-query var/itp-context --rule-id='Acme\Context\ArchitectureRules::I18n'
 ```
 
 ## Project Structure
@@ -260,7 +262,7 @@ That keeps the actual guidance in one place while still exposing it to different
 
 ## CLI Tools
 
-The package ships with four small CLI helpers.
+The package ships with five small CLI helpers.
 
 ### `itp-context-summarize`
 
@@ -293,7 +295,15 @@ vendor/bin/itp-context-export var/itp-context src --exclude=vendor --exclude=tes
 The export contains:
 - `index.md` with an overview of all exported symbols
 - one markdown file per annotated PHP symbol under `php/`
-- compact frontmatter fields for `id`, `title`, `source_path`, `kind` and `rule_ids`
+- compact frontmatter fields for `id`, `title`, `source_path`, `kind`, `rule_ids`, `owners`, `refs`, `verified_by`, `annotated_methods` and `rule_count`
+
+### `itp-context-query`
+
+```shell
+vendor/bin/itp-context-query var/itp-context --rule-id='Acme\Context\ArchitectureRules::I18n'
+vendor/bin/itp-context-query var/itp-context --owner='Team-Architecture'
+vendor/bin/itp-context-query var/itp-context --text='i18n'
+```
 
 For small libraries, prefer a tiny export with a few high-value symbols over exhaustive annotation. The goal is context density, not full documentation coverage.
 

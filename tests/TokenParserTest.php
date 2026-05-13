@@ -72,6 +72,67 @@ final class TokenParserTest extends TestCase
         self::assertSame('Bracketed\\Example\\Demo', $symbol->fqcn);
     }
 
+    public function testGetSymbolsFromFileIncludesFunctionsAndMultipleDeclarations(): void
+    {
+        $path = $this->writePhpFile(<<<'PHP'
+namespace Multi\Example;
+
+function helper(): string
+{
+    return 'ok';
+}
+
+final class Demo
+{
+}
+PHP);
+
+        $symbols = (new TokenParser())->getSymbolsFromFile($path);
+
+        self::assertCount(2, $symbols);
+        self::assertSame('Multi\\Example\\helper', $symbols[0]->fqcn);
+        self::assertSame('function', $symbols[0]->kind);
+        self::assertSame('Multi\\Example\\Demo', $symbols[1]->fqcn);
+        self::assertSame('class', $symbols[1]->kind);
+    }
+
+    public function testGetRuleTargetsFromFileParsesClassMethodAndFunctionRules(): void
+    {
+        $path = $this->writePhpFile(<<<'PHP'
+namespace Multi\Example;
+
+use ItpContext\Attribute\Rule;
+use ItpContextExample\Context\ArchitectureRules;
+
+#[Rule(ArchitectureRules::ViewAbstraction)]
+function helper(): string
+{
+    return 'ok';
+}
+
+#[Rule(ArchitectureRules::ViewAbstraction)]
+final class Demo
+{
+    #[Rule(ArchitectureRules::I18n)]
+    public function render(): string
+    {
+        return 'ok';
+    }
+}
+PHP);
+
+        $targets = (new TokenParser())->getRuleTargetsFromFile($path);
+
+        self::assertCount(3, $targets);
+        self::assertSame('function', $targets[0]->kind);
+        self::assertSame(['ItpContextExample\\Context\\ArchitectureRules::ViewAbstraction'], $targets[0]->ruleIds);
+        self::assertSame('class', $targets[1]->kind);
+        self::assertSame('Multi\\Example\\Demo', $targets[1]->fqcn);
+        self::assertSame('method', $targets[2]->kind);
+        self::assertSame('Multi\\Example\\Demo::render', $targets[2]->fqcn);
+        self::assertSame(['ItpContextExample\\Context\\ArchitectureRules::I18n'], $targets[2]->ruleIds);
+    }
+
     public function testParseNamespaceHandlesMixedTokenStreams(): void
     {
         $method = new \ReflectionMethod(TokenParser::class, 'parseNamespace');

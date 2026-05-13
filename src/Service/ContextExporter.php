@@ -6,18 +6,17 @@ namespace ItpContext\Service;
 
 use ItpContext\Attribute\Rule;
 use ItpContext\Context\PackageRules;
+use ItpContext\Contract\ContextDocumentReader;
+use ItpContext\Model\ContextDocument;
 use ItpContext\Model\ExportReport;
-use ReflectionAttribute;
-use ReflectionClass;
 use RuntimeException;
 
 #[Rule(PackageRules::AgentFriendlyMarkdown)]
+#[Rule(PackageRules::DiscoveryMetadata)]
 final class ContextExporter
 {
     public function __construct(
-        private Summarizer $summarizer = new Summarizer(),
-        private ContextResolver $resolver = new ContextResolver(),
-        private TokenParser $parser = new TokenParser(),
+        private ContextDocumentReader $reader = new ContextReader(),
     ) {
     }
 
@@ -44,37 +43,54 @@ final class ContextExporter
 
         foreach ($files as $filePath) {
             try {
-                $document = $this->buildDocument($filePath);
+                $fileDocuments = $this->reader->read($filePath);
             } catch (\Throwable $throwable) {
+                if ($throwable instanceof RuntimeException && $throwable->getMessage() === 'No class/interface/trait/enum/function found in file.') {
+                    $skippedFileCount++;
+                    continue;
+                }
+
                 $errors[] = $filePath . ': ' . $throwable->getMessage();
                 continue;
             }
 
-            if ($document === null) {
-                $skippedFileCount++;
-                continue;
+            foreach ($fileDocuments as $document) {
+                if (!$document->hasRules()) {
+                    $skippedFileCount++;
+                    continue;
+                }
+
+                $fileName = $this->documentFileName($document);
+                $writtenFiles[] = $writer->writeMarkdown(
+                    area: 'php',
+                    slug: substr($fileName, 4, -3),
+                    meta: [
+                        'id' => $document->id,
+                        'title' => $document->title,
+                        'source_path' => $document->sourcePath,
+                        'kind' => $document->kind,
+                        'rule_ids' => $document->ruleIds,
+                        'owners' => $document->owners,
+                        'refs' => $document->refs,
+                        'verified_by' => $document->verifiedBy,
+                        'annotated_methods' => $document->annotatedMethods,
+                        'rule_count' => count($document->ruleIds),
+                    ],
+                    body: $document->body,
+                );
+
+                $documents[] = [
+                    'title' => $document->title,
+                    'kind' => $document->kind,
+                    'source_path' => $document->sourcePath,
+                    'file_name' => $fileName,
+                    'rule_ids' => $document->ruleIds,
+                    'owners' => $document->owners,
+                    'refs' => $document->refs,
+                    'verified_by' => $document->verifiedBy,
+                    'annotated_methods' => $document->annotatedMethods,
+                ];
             }
-
-            $relativePath = $this->toRelativePath($filePath);
-            $writtenFiles[] = $writer->writeMarkdown(
-                area: 'php',
-                slug: str_replace('\\', '_', $document['fqcn']),
-                meta: [
-                    'id' => 'PHP:' . $document['fqcn'],
-                    'title' => $document['fqcn'],
-                    'source_path' => $relativePath,
-                    'kind' => $document['kind'],
-                    'rule_ids' => $document['rule_ids'],
-                ],
-                body: $document['body'],
-            );
-
-            $documents[] = [
-                'fqcn' => $document['fqcn'],
-                'kind' => $document['kind'],
-                'source_path' => $relativePath,
-                'file_name' => 'php/' . str_replace('\\', '_', $document['fqcn']) . '.md',
-            ];
         }
 
         $writtenFiles[] = $writer->writeMarkdown(
@@ -97,139 +113,17 @@ final class ContextExporter
     }
 
     /**
-     * @return array{
-     *     fqcn: class-string,
+     * @param list<array{
+     *     title: string,
      *     kind: string,
-     *     rule_ids: list<string>,
-     *     owners: list<string>,
-     *     refs: list<string>,
-     *     verified_by: list<string>,
-     *     annotated_methods: list<string>,
-     *     body: string
-     * }|null
-     */
-    private function buildDocument(string $filePath): ?array
-    {
-        $symbol = $this->parser->getFirstSymbolFromFile($filePath);
-        if ($symbol === null) {
-            return null;
-        }
-
-        $exists = match ($symbol->kind) {
-            'class', 'enum' => class_exists($symbol->fqcn),
-            'interface' => interface_exists($symbol->fqcn),
-            'trait' => trait_exists($symbol->fqcn),
-            default => false,
-        };
-
-        if (!$exists) {
-            throw new RuntimeException("Symbol not autoloadable: {$symbol->fqcn}");
-        }
-
-        $reflection = new ReflectionClass($symbol->fqcn);
-        $metadata = $this->collectMetadata($reflection);
-        if ($metadata['rule_ids'] === []) {
-            return null;
-        }
-
-        return [
-            'fqcn' => $symbol->fqcn,
-            'kind' => $symbol->kind,
-            'rule_ids' => $metadata['rule_ids'],
-            'owners' => $metadata['owners'],
-            'refs' => $metadata['refs'],
-            'verified_by' => $metadata['verified_by'],
-            'annotated_methods' => $metadata['annotated_methods'],
-            'body' => $this->summarizer->summarize($filePath),
-        ];
-    }
-
-    /**
-     * @param ReflectionClass<object> $reflection
-     * @return array{
+     *     source_path: string,
+     *     file_name: string,
      *     rule_ids: list<string>,
      *     owners: list<string>,
      *     refs: list<string>,
      *     verified_by: list<string>,
      *     annotated_methods: list<string>
-     * }
-     */
-    private function collectMetadata(ReflectionClass $reflection): array
-    {
-        $ruleIds = [];
-        $owners = [];
-        $refs = [];
-        $verifiedBy = [];
-        $annotatedMethods = [];
-
-        foreach ($reflection->getAttributes(Rule::class) as $attribute) {
-            $this->appendDefinitionMetadata($attribute, $ruleIds, $owners, $refs, $verifiedBy);
-        }
-
-        foreach ($reflection->getMethods() as $method) {
-            if ($method->getDeclaringClass()->getName() !== $reflection->getName()) {
-                continue;
-            }
-
-            $attributes = $method->getAttributes(Rule::class);
-            if ($attributes === []) {
-                continue;
-            }
-
-            $annotatedMethods[] = $method->getName();
-
-            foreach ($attributes as $attribute) {
-                $this->appendDefinitionMetadata($attribute, $ruleIds, $owners, $refs, $verifiedBy);
-            }
-        }
-
-        sort($annotatedMethods);
-
-        return [
-            'rule_ids' => $this->uniqueSorted($ruleIds),
-            'owners' => $this->uniqueSorted($owners),
-            'refs' => $this->uniqueSorted($refs),
-            'verified_by' => $this->uniqueSorted($verifiedBy),
-            'annotated_methods' => $annotatedMethods,
-        ];
-    }
-
-    /**
-     * @param ReflectionAttribute<Rule> $attribute
-     * @param list<string> $ruleIds
-     * @param list<string> $owners
-     * @param list<string> $refs
-     * @param list<string> $verifiedBy
-     */
-    private function appendDefinitionMetadata(
-        ReflectionAttribute $attribute,
-        array &$ruleIds,
-        array &$owners,
-        array &$refs,
-        array &$verifiedBy,
-    ): void {
-        $instance = $attribute->newInstance();
-        $id = $instance->id;
-        $ruleIds[] = $id::class . "::{$id->name}";
-
-        $definition = $this->resolver->resolve($id);
-        if ($definition->owner !== null && trim($definition->owner) !== '') {
-            $owners[] = $definition->owner;
-        }
-
-        foreach ($definition->refs as $ref) {
-            if ($ref !== '') {
-                $refs[] = $ref;
-            }
-        }
-
-        foreach ($definition->verifiedBy as $proof) {
-            $verifiedBy[] = $proof;
-        }
-    }
-
-    /**
-     * @param list<array{fqcn:string,kind:string,source_path:string,file_name:string}> $documents
+     * }> $documents
      */
     private function renderIndex(array $documents): string
     {
@@ -245,9 +139,25 @@ final class ContextExporter
         ];
 
         foreach ($documents as $document) {
-            $lines[] = '- [' . $document['fqcn'] . '](' . $document['file_name'] . ')'
+            $lines[] = '- [' . $document['title'] . '](' . $document['file_name'] . ')'
                 . ' (' . $document['kind'] . ')'
                 . ' - `' . $document['source_path'] . '`';
+
+            if ($document['rule_ids'] !== []) {
+                $lines[] = '  - rules: ' . $this->inlineCodeList($document['rule_ids']);
+            }
+            if ($document['owners'] !== []) {
+                $lines[] = '  - owners: ' . implode(', ', $document['owners']);
+            }
+            if ($document['refs'] !== []) {
+                $lines[] = '  - refs: ' . implode(', ', $document['refs']);
+            }
+            if ($document['verified_by'] !== []) {
+                $lines[] = '  - proof: ' . implode(', ', $document['verified_by']);
+            }
+            if ($document['annotated_methods'] !== []) {
+                $lines[] = '  - annotated methods: ' . $this->inlineCodeList($document['annotated_methods']);
+            }
         }
 
         $lines[] = '';
@@ -309,31 +219,20 @@ final class ContextExporter
         return false;
     }
 
-    /**
-     * @param list<string> $values
-     * @return list<string>
-     */
-    private function uniqueSorted(array $values): array
+    private function documentFileName(ContextDocument $document): string
     {
-        $values = array_values(array_unique(array_filter($values, static fn (string $value): bool => $value !== '')));
-        sort($values);
+        if ($document->kind === 'function') {
+            return 'php/function_' . str_replace('\\', '_', $document->title) . '.md';
+        }
 
-        return $values;
+        return 'php/' . str_replace('\\', '_', $document->title) . '.md';
     }
 
-    private function toRelativePath(string $path): string
+    /**
+     * @param list<string> $values
+     */
+    private function inlineCodeList(array $values): string
     {
-        $cwd = getcwd();
-        if (!is_string($cwd)) {
-            return $path;
-        }
-
-        $prefix = rtrim($cwd, '/') . '/';
-
-        if (!str_starts_with($path, $prefix)) {
-            return $path;
-        }
-
-        return substr($path, strlen($prefix));
+        return implode(', ', array_map(static fn (string $value): string => '`' . $value . '`', $values));
     }
 }

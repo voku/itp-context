@@ -28,4 +28,14 @@ return [
         tier: Tier::Standard,
         rationale: 'Coding agents need stable structure more than exhaustive metadata, especially in a small package.',
     ),
+    'DegradedDiscovery' => new RuleDef(
+        statement: 'Keep context discovery useful even when source symbols are not autoloadable yet.',
+        tier: Tier::Standard,
+        rationale: 'Token-derived context lets agents inspect partial, generated or in-progress code without waiting for a clean runtime.',
+    ),
+    'DiscoveryMetadata' => new RuleDef(
+        statement: 'Export searchable ownership, reference and proof metadata with each context document.',
+        tier: Tier::Standard,
+        rationale: 'Agents can rank and query context faster when key retrieval fields are available in frontmatter and index views.',
+    ),
 ];

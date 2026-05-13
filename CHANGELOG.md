@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added `ContextReader` and token-based degraded summaries so multi-symbol files, functions and non-autoloadable code still expose context
+- added richer export metadata (`owners`, `refs`, `verified_by`, `annotated_methods`, `rule_count`) plus a queryable export index
+- added `ContextQuery` and the `itp-context-query` CLI for searching exported context documents
+- expanded package dogfooding annotations and refreshed the committed self-export snapshot
 - added a shared `docs/skills/itp-context.md` agent skill plus thin Copilot, Codex, Claude and Gemini entrypoint files
 - clarified that `refs` can point to any useful architecture context, including ADRs, docs and design notes
 - updated the generator and example catalog to use ADR-style paths as helpful default references
