@@ -109,4 +109,12 @@ final class ExportWriterTest extends TestCase
 
         (new ExportWriter($this->outputPath . '/readonly'))->writeMarkdown('php', 'custom-slug', ['title' => 'Context'], 'Body');
     }
+
+    public function testFormatLastErrorMessageReturnsEmptyStringForNonArrays(): void
+    {
+        $method = new \ReflectionMethod(ExportWriter::class, 'formatLastErrorMessage');
+        $method->setAccessible(true);
+
+        self::assertSame('', $method->invoke(null, 'not-an-array'));
+    }
 }

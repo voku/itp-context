@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ItpContext\Tests;
 
+use ItpContext\Model\RuleTarget;
 use ItpContext\Service\ContextReader;
 use PHPUnit\Framework\TestCase;
 
@@ -101,11 +102,120 @@ PHP);
         self::assertStringContainsString('Raw rule annotation.', $documents[0]->body);
     }
 
+    public function testCollectMetadataContinuesAfterResolverExceptions(): void
+    {
+        $enumClass = $this->defineBrokenRuleEnum('BrokenDirect');
+        $method = new \ReflectionMethod(ContextReader::class, 'collectMetadata');
+        $method->setAccessible(true);
+
+        $metadata = $method->invoke(
+            new ContextReader(),
+            new RuleTarget(
+                kind: 'class',
+                name: 'Subject',
+                fqcn: 'ItpContext\\Tests\\Fixtures\\Subject',
+                ruleIds: [
+                    $enumClass . '::Missing',
+                    'ItpContextExample\\Context\\ArchitectureRules::ViewAbstraction',
+                ],
+            ),
+            []
+        );
+
+        self::assertSame(
+            [
+                'ItpContextExample\\Context\\ArchitectureRules::ViewAbstraction',
+                $enumClass . '::Missing',
+            ],
+            $metadata['rule_ids']
+        );
+        self::assertSame(['Team-Architecture'], $metadata['owners']);
+    }
+
+    public function testCollectMetadataContinuesAfterNullMethodDefinitions(): void
+    {
+        $method = new \ReflectionMethod(ContextReader::class, 'collectMetadata');
+        $method->setAccessible(true);
+
+        $metadata = $method->invoke(
+            new ContextReader(),
+            null,
+            [
+                new RuleTarget(
+                    kind: 'method',
+                    name: 'render',
+                    fqcn: 'ItpContext\\Tests\\Fixtures\\Subject::render',
+                    ownerFqcn: 'ItpContext\\Tests\\Fixtures\\Subject',
+                    ruleIds: [
+                        'MissingDelimiter',
+                        'ItpContextExample\\Context\\ArchitectureRules::I18n',
+                    ],
+                ),
+            ]
+        );
+
+        self::assertSame(
+            [
+                'ItpContextExample\\Context\\ArchitectureRules::I18n',
+                'MissingDelimiter',
+            ],
+            $metadata['rule_ids']
+        );
+        self::assertSame(['render'], $metadata['annotated_methods']);
+        self::assertSame(['Team-Architecture'], $metadata['owners']);
+    }
+
+    public function testTryResolveRuleDefinitionReturnsNullForInvalidIdentifiers(): void
+    {
+        $method = new \ReflectionMethod(ContextReader::class, 'tryResolveRuleDefinition');
+        $method->setAccessible(true);
+        $className = 'ItpContext\\Tests\\Fixtures\\NonRuleConstantHolder' . uniqid();
+
+        eval("namespace ItpContext\\Tests\\Fixtures; final class " . substr($className, strrpos($className, '\\') + 1) . " { public const Example = 'value'; }");
+
+        self::assertNull($method->invoke(new ContextReader(), 'MissingDelimiter'));
+        self::assertNull($method->invoke(new ContextReader(), 'ItpContext\\Tests\\Fixtures\\MissingRules::Example'));
+        self::assertNull($method->invoke(new ContextReader(), $className . '::Example'));
+    }
+
     private function writeFixtureFile(string $name, string $content): string
     {
         $path = $this->fixturePath . '/' . $name;
         file_put_contents($path, $content);
 
         return $path;
+    }
+
+    private function defineBrokenRuleEnum(string $name): string
+    {
+        $namespace = 'ItpContext\\Tests\\Fixtures\\' . uniqid($name);
+        $enumClass = $namespace . '\\' . $name . 'Rules';
+        $enumPath = $this->fixturePath . '/' . $name . 'Rules.php';
+
+        file_put_contents($enumPath, <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace};
+
+enum {$name}Rules implements \ItpContext\Contract\RuleIdentifier
+{
+    case Missing;
+}
+PHP);
+        file_put_contents($this->fixturePath . '/' . $name . 'Catalog.php', <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$namespace};
+
+return [];
+PHP);
+
+        require_once $enumPath;
+
+        return $enumClass;
     }
 }

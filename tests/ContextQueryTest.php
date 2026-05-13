@@ -47,12 +47,64 @@ final class ContextQueryTest extends TestCase
         self::assertSame('ItpContext\\Service\\Summarizer', $results[1]->title);
     }
 
+    /**
+     * @dataProvider mismatchedFilterProvider
+     * @param array<string, string> $filters
+     */
+    public function testSearchRejectsMismatchedFilters(array $filters): void
+    {
+        $results = (new ContextQuery())->search($this->exportPath, $filters);
+
+        self::assertSame([], $results);
+    }
+
+    public function testSearchIgnoresBlankFilters(): void
+    {
+        $results = (new ContextQuery())->search($this->exportPath, [
+            'owner' => '   ',
+            'rule_id' => 'ItpContext\\Context\\PackageRules::DiscoveryMetadata',
+        ]);
+
+        self::assertCount(2, $results);
+    }
+
+    public function testNormalizeListReturnsEmptyArrayForScalarValues(): void
+    {
+        $method = new \ReflectionMethod(ContextQuery::class, 'normalizeList');
+        $method->setAccessible(true);
+
+        self::assertSame([], $method->invoke(new ContextQuery(), 'not-a-list'));
+    }
+
     public function testSearchRejectsMissingExportDirectories(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Export directory not found');
 
         (new ContextQuery())->search($this->exportPath . '-missing');
+    }
+
+    /**
+     * @return iterable<string, array{0: array<string, string>}>
+     */
+    public static function mismatchedFilterProvider(): iterable
+    {
+        yield 'owner' => [[
+            'owner' => 'Team-Does-Not-Exist',
+        ]];
+        yield 'ref' => [[
+            'ref' => 'docs/adr/does-not-exist.md',
+        ]];
+        yield 'verified_by' => [[
+            'verified_by' => 'tests/DoesNotExist.php',
+        ]];
+        yield 'source_path' => [[
+            'source_path' => 'src/Service/DoesNotExist.php',
+        ]];
+        yield 'kind' => [[
+            'kind' => 'function',
+            'rule_id' => 'ItpContext\\Context\\PackageRules::DiscoveryMetadata',
+        ]];
     }
 
     private function removeDirectory(string $path): void
