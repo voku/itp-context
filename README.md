@@ -80,6 +80,7 @@ declare(strict_types=1);
 
 namespace Acme\Context;
 
+use Acme\Tests\I18nTest;
 use ItpContext\Enum\Tier;
 use ItpContext\Model\RuleDef;
 
@@ -88,13 +89,15 @@ return [
         statement: 'Use a dedicated view abstraction for rendering.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
+        rationale: 'A dedicated view layer keeps rendering concerns isolated from domain and controller code.',
         refs: ['docs/adr/view-abstraction.md', 'docs/ui/rendering.md'],
     ),
     'I18n' => new RuleDef(
-        statement: 'Use translated labels and locale-aware formatting.',
+        statement: 'Use locale-aware formatting and translated UI labels.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
-        verifiedBy: ['tests/Unit/I18nTest.php'],
+        rationale: 'Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.',
+        verifiedBy: [I18nTest::class],
         refs: ['docs/adr/i18n.md'],
     ),
 ];
@@ -158,13 +161,15 @@ Example output:
 ### [INFO] Use a dedicated view abstraction for rendering.
 - **ID:** `Acme\Context\ArchitectureRules::ViewAbstraction`
 - **Owner:** Team-Architecture
+- **Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.
 - **Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md
 
 ## Method: `render`
-### [INFO] Use translated labels and locale-aware formatting.
+### [INFO] Use locale-aware formatting and translated UI labels.
 - **ID:** `Acme\Context\ArchitectureRules::I18n`
 - **Owner:** Team-Architecture
-- **Proof:** tests/Unit/I18nTest.php
+- **Why:** Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.
+- **Proof:** Acme\Tests\I18nTest
 - **Refs:** docs/adr/i18n.md
 ```
 
@@ -285,6 +290,8 @@ vendor/bin/itp-context-generate Architecture SecurityBoundary src/Context Acme\\
 This creates or extends:
 - `src/Context/ArchitectureRules.php`
 - `src/Context/ArchitectureCatalog.php`
+
+The generated catalog entry seeds `statement`, `owner`, `rationale`, `verifiedBy`, and `refs` placeholders so new rules start with a fuller definition.
 
 ### `itp-context-export`
 

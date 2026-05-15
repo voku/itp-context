@@ -36,6 +36,9 @@ final class SummarizerTest extends TestCase
         self::assertStringContainsString('Context: DashboardView', $output);
         self::assertStringContainsString('ArchitectureRules::ViewAbstraction', $output);
         self::assertStringContainsString('ArchitectureRules::I18n', $output);
+        self::assertStringContainsString('**Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.', $output);
+        self::assertStringContainsString('**Why:** Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.', $output);
+        self::assertStringContainsString('**Proof:** ItpContextExample\Tests\I18nTest', $output);
         self::assertStringContainsString('**Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md', $output);
         self::assertStringContainsString('**Refs:** docs/adr/i18n.md', $output);
     }
@@ -46,6 +49,8 @@ final class SummarizerTest extends TestCase
 
         self::assertStringContainsString('Context: ContextExporter', $output);
         self::assertStringContainsString(PackageRules::AgentFriendlyMarkdown->name, $output);
+        self::assertStringContainsString('**Owner:** Team-ItpContext', $output);
+        self::assertStringContainsString('**Proof:** ItpContext\Tests\ContextExporterTest', $output);
     }
 
     public function testSummarizeRejectsMissingFiles(): void
