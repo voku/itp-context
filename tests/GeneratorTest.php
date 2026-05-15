@@ -165,6 +165,150 @@ PHP);
         (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
     }
 
+    /**
+     * @runInSeparateProcess
+     */
+    public function testHandleRejectsEnumFilesThatCannotBeReadAfterLookup(): void
+    {
+        mkdir($this->generatedPath, 0777, true);
+        \file_put_contents($this->generatedPath . '/ExampleRules.php', <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace Smoke\Context;
+
+use ItpContext\Contract\RuleIdentifier;
+
+enum ExampleRules implements RuleIdentifier
+{
+    case ExistingRule;
+}
+PHP);
+
+        eval(<<<'PHP'
+namespace ItpContext\Service;
+
+function file_get_contents(string $path): string|false
+{
+    if (str_ends_with($path, 'ExampleRules.php')) {
+        return false;
+    }
+
+    return \file_get_contents($path);
+}
+PHP);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to read');
+
+        (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
+    }
+
+    public function testHandleRejectsMalformedEnumDefinitionMatches(): void
+    {
+        mkdir($this->generatedPath, 0777, true);
+        file_put_contents($this->generatedPath . '/ExampleRules.php', <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace Smoke\Context;
+
+use ItpContext\Contract\RuleIdentifier;
+use ItpContext\Model\RuleDef;
+
+enum ExampleRules implements RuleIdentifier
+{
+    case ExistingRule;
+
+    public function getDefinition(): RuleDef
+    {
+        return new RuleDef('Existing rule.');
+    }
+}
+PHP);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Malformed enum definition match');
+
+        (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testHandleRejectsImportUpdatesWhenPregReplaceFails(): void
+    {
+        mkdir($this->generatedPath, 0777, true);
+        \file_put_contents($this->generatedPath . '/ExampleRules.php', <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace Smoke\Context;
+
+use ItpContext\Contract\RuleIdentifier;
+
+enum ExampleRules implements RuleIdentifier
+{
+    case ExistingRule;
+}
+PHP);
+
+        eval(<<<'PHP'
+namespace ItpContext\Service;
+
+function preg_replace($pattern, $replacement, $subject, $limit = -1)
+{
+    if ($pattern === '/^(namespace [^;]+;\n(?:\n?use [^;]+;\n)*)/m') {
+        return null;
+    }
+
+    return \preg_replace($pattern, $replacement, $subject, $limit);
+}
+PHP);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to update enum file imports');
+
+        (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testHandleRejectsEnumWritesThatFail(): void
+    {
+        mkdir($this->generatedPath, 0777, true);
+
+        eval(<<<'PHP'
+namespace ItpContext\Service;
+
+function file_put_contents(string $path, string $content): int|false
+{
+    if (str_ends_with($path, 'ExampleRules.php')) {
+        return false;
+    }
+
+    return \file_put_contents($path, $content);
+}
+PHP);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to write');
+
+        (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
+    }
+
+    public function testFormatLastErrorMessageReturnsEmptyStringForNonArrayInput(): void
+    {
+        $method = new \ReflectionMethod(Generator::class, 'formatLastErrorMessage');
+        $method->setAccessible(true);
+
+        self::assertSame('', $method->invoke(null, 'nope'));
+    }
+
     private function removeDirectory(string $path): void
     {
         if (!is_dir($path)) {

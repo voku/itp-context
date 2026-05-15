@@ -187,6 +187,37 @@ final class ContextExporterTest extends TestCase
         self::assertGreaterThan(0, $report->exportedDocumentCount);
     }
 
+    public function testExportSkipsFilesWithoutSymbolsAndContinuesWithLaterFiles(): void
+    {
+        $sourceDir = $this->exportPath . '/mixed-source';
+        mkdir($sourceDir, 0777, true);
+
+        file_put_contents($sourceDir . '/NoSymbols.php', "<?php\n\$value = 1;\n");
+        file_put_contents($sourceDir . '/DashboardView.php', <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace MixedSource;
+
+use ItpContext\Attribute\Rule;
+use ItpContextExample\Context\ArchitectureRules;
+
+#[Rule(ArchitectureRules::ViewAbstraction)]
+final class DashboardView
+{
+}
+PHP);
+
+        $report = (new ContextExporter())->export($this->exportPath . '-result', [$sourceDir]);
+
+        self::assertSame(2, $report->scannedFileCount);
+        self::assertSame(1, $report->exportedDocumentCount);
+        self::assertSame(1, $report->skippedFileCount);
+        self::assertSame([], $report->errors);
+        self::assertFileExists($this->exportPath . '-result/php/MixedSource_DashboardView.md');
+    }
+
     public function testExportCreatesEmptyIndexWhenNoAnnotatedSymbolsExist(): void
     {
         (new ContextExporter())->export(

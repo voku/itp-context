@@ -177,6 +177,36 @@ PHP);
         self::assertSame(['File not found: ' . $this->fixturePath . '/missing.php'], $output);
     }
 
+    public function testCliWritesOnlyTheErrorMessageToStderrAndExitsWithCodeOne(): void
+    {
+        $command = [
+            PHP_BINARY,
+            dirname(__DIR__) . '/bin/itp-context-summarize',
+            $this->fixturePath . '/missing.php',
+        ];
+
+        $process = proc_open(
+            $command,
+            [
+                1 => ['pipe', 'w'],
+                2 => ['pipe', 'w'],
+            ],
+            $pipes
+        );
+
+        self::assertIsResource($process);
+
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+
+        self::assertSame('', $stdout);
+        self::assertSame('File not found: ' . $this->fixturePath . "/missing.php\n", $stderr);
+        self::assertSame(1, $exitCode);
+    }
+
     /**
      * @return array{0: string, 1: string}
      */

@@ -182,7 +182,28 @@ PHP);
 
         self::assertNull($method->invoke(new ContextReader(), 'MissingDelimiter'));
         self::assertNull($method->invoke(new ContextReader(), 'ItpContext\\Tests\\Fixtures\\MissingRules::Example'));
+        self::assertNull($method->invoke(new ContextReader(), 'ItpContextExample\\Context\\ArchitectureRules::MissingCase'));
         self::assertNull($method->invoke(new ContextReader(), $className . '::Example'));
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testToRelativePathReturnsOriginalPathWhenGetcwdFails(): void
+    {
+        eval(<<<'PHP'
+namespace ItpContext\Service;
+
+function getcwd()
+{
+    return false;
+}
+PHP);
+
+        $method = new \ReflectionMethod(ContextReader::class, 'toRelativePath');
+        $method->setAccessible(true);
+
+        self::assertSame('/tmp/example.php', $method->invoke(new ContextReader(), '/tmp/example.php'));
     }
 
     private function writeFixtureFile(string $name, string $content): string

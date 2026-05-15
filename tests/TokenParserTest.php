@@ -47,6 +47,14 @@ PHP);
         self::assertNull((new TokenParser())->getFirstSymbolFromFile($this->tmpPath . '/missing.php'));
     }
 
+    public function testPublicAccessorsReturnEmptyListsForUnreadableFiles(): void
+    {
+        $path = $this->tmpPath . '/missing.php';
+
+        self::assertSame([], (new TokenParser())->getSymbolsFromFile($path));
+        self::assertSame([], (new TokenParser())->getRuleTargetsFromFile($path));
+    }
+
     public function testGetFirstSymbolFromFileParsesMultiSegmentNamespaces(): void
     {
         $path = $this->writePhpFile('namespace Foo\\Bar\\Baz; final class Example {}');
