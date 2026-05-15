@@ -75,7 +75,7 @@ PHP);
         );
         self::assertSame(['Team-Architecture'], $documents[1]->owners);
         self::assertSame(['docs/adr/i18n.md', 'docs/adr/view-abstraction.md', 'docs/ui/rendering.md'], $documents[1]->refs);
-        self::assertSame(['src/Tests/I18nTest.php'], $documents[1]->verifiedBy);
+        self::assertSame(['ItpContextExample\Tests\I18nTest'], $documents[1]->verifiedBy);
         self::assertSame(['render'], $documents[1]->annotatedMethods);
         self::assertStringContainsString('**Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.', $documents[1]->body);
         self::assertStringContainsString('**Why:** Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.', $documents[1]->body);
@@ -169,7 +169,7 @@ PHP);
         self::assertSame(['render'], $metadata['annotated_methods']);
         self::assertSame(['Team-Architecture'], $metadata['owners']);
         self::assertSame(['docs/adr/i18n.md'], $metadata['refs']);
-        self::assertSame(['src/Tests/I18nTest.php'], $metadata['verified_by']);
+        self::assertSame(['ItpContextExample\Tests\I18nTest'], $metadata['verified_by']);
     }
 
     public function testTryResolveRuleDefinitionReturnsNullForInvalidIdentifiers(): void

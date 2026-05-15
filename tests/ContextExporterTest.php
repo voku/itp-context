@@ -54,7 +54,7 @@ final class ContextExporterTest extends TestCase
         self::assertStringContainsString('ArchitectureRules::ViewAbstraction', $symbolContent);
         self::assertStringContainsString('ArchitectureRules::I18n', $symbolContent);
         self::assertStringContainsString('**Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.', $symbolContent);
-        self::assertStringContainsString('**Proof:** src/Tests/I18nTest.php', $symbolContent);
+        self::assertStringContainsString('**Proof:** ItpContextExample\\Tests\\I18nTest', $symbolContent);
         self::assertStringContainsString('**Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md', $symbolContent);
         self::assertStringContainsString('**Refs:** docs/adr/i18n.md', $symbolContent);
         self::assertStringContainsString('# Context: DashboardView', $symbolContent);

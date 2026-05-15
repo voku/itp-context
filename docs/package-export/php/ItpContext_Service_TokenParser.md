@@ -5,6 +5,12 @@ source_path: "src/Service/TokenParser.php"
 kind: "class"
 rule_ids:
   - "ItpContext\\Context\\PackageRules::TokenFirstDiscovery"
+owners:
+  - "Team-ItpContext"
+refs:
+  - "README.md"
+verified_by:
+  - "ItpContext\\Tests\\TokenParserTest"
 rule_count: 1
 ---
 
@@ -13,4 +19,7 @@ rule_count: 1
 ### [INFO] Discover symbols with tokens before reflection.
 - **ID:** `ItpContext\Context\PackageRules::TokenFirstDiscovery`
 - **Why:** Cheap token scanning narrows the work and avoids false positives from non-declaration code such as ::class references.
+- **Owner:** Team-ItpContext
+- **Proof:** ItpContext\Tests\TokenParserTest
+- **Refs:** README.md
 

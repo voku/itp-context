@@ -6,6 +6,13 @@ namespace ItpContext\Context;
 
 use ItpContext\Enum\Tier;
 use ItpContext\Model\RuleDef;
+use ItpContext\Tests\ContextExporterTest;
+use ItpContext\Tests\ContextQueryTest;
+use ItpContext\Tests\ContextReaderTest;
+use ItpContext\Tests\ContextResolverTest;
+use ItpContext\Tests\SummarizerTest;
+use ItpContext\Tests\TokenParserTest;
+use ItpContext\Tests\ValidatorTest;
 
 return [
     'FrameworkAgnostic' => new RuleDef(
@@ -13,7 +20,7 @@ return [
         tier: Tier::Standard,
         owner: 'Team-ItpContext',
         rationale: 'The package stays easy to embed across host projects when core services depend only on PHP and local types.',
-        verifiedBy: ['tests/ContextResolverTest.php'],
+        verifiedBy: [ContextResolverTest::class],
         refs: ['docs/skills/itp-context.md', 'AGENTS.md'],
     ),
     'CatalogByConvention' => new RuleDef(
@@ -21,7 +28,7 @@ return [
         tier: Tier::Standard,
         owner: 'Team-ItpContext',
         rationale: 'A fixed filename convention keeps rule lookup predictable without extra configuration.',
-        verifiedBy: ['tests/ContextResolverTest.php', 'tests/ValidatorTest.php'],
+        verifiedBy: [ContextResolverTest::class, ValidatorTest::class],
         refs: ['docs/skills/itp-context.md', 'README.md'],
     ),
     'TokenFirstDiscovery' => new RuleDef(
@@ -29,7 +36,7 @@ return [
         tier: Tier::Standard,
         owner: 'Team-ItpContext',
         rationale: 'Cheap token scanning narrows the work and avoids false positives from non-declaration code such as ::class references.',
-        verifiedBy: ['tests/TokenParserTest.php'],
+        verifiedBy: [TokenParserTest::class],
         refs: ['README.md'],
     ),
     'AgentFriendlyMarkdown' => new RuleDef(
@@ -37,7 +44,7 @@ return [
         tier: Tier::Standard,
         owner: 'Team-ItpContext',
         rationale: 'Coding agents need stable structure more than exhaustive metadata, especially in a small package.',
-        verifiedBy: ['tests/ContextExporterTest.php'],
+        verifiedBy: [ContextExporterTest::class],
         refs: ['docs/package-export/index.md', 'README.md'],
     ),
     'DegradedDiscovery' => new RuleDef(
@@ -45,7 +52,7 @@ return [
         tier: Tier::Standard,
         owner: 'Team-ItpContext',
         rationale: 'Token-derived context lets agents inspect partial, generated or in-progress code without waiting for a clean runtime.',
-        verifiedBy: ['tests/ContextReaderTest.php', 'tests/SummarizerTest.php'],
+        verifiedBy: [ContextReaderTest::class, SummarizerTest::class],
         refs: ['README.md'],
     ),
     'DiscoveryMetadata' => new RuleDef(
@@ -53,7 +60,7 @@ return [
         tier: Tier::Standard,
         owner: 'Team-ItpContext',
         rationale: 'Agents can rank and query context faster when key retrieval fields are available in frontmatter and index views.',
-        verifiedBy: ['tests/ContextExporterTest.php', 'tests/ContextQueryTest.php'],
+        verifiedBy: [ContextExporterTest::class, ContextQueryTest::class],
         refs: ['docs/package-export/index.md', 'README.md'],
     ),
 ];

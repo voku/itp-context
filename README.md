@@ -80,6 +80,7 @@ declare(strict_types=1);
 
 namespace Acme\Context;
 
+use Acme\Tests\I18nTest;
 use ItpContext\Enum\Tier;
 use ItpContext\Model\RuleDef;
 
@@ -96,7 +97,7 @@ return [
         tier: Tier::Standard,
         owner: 'Team-Architecture',
         rationale: 'Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.',
-        verifiedBy: ['src/Tests/I18nTest.php'],
+        verifiedBy: [I18nTest::class],
         refs: ['docs/adr/i18n.md'],
     ),
 ];
@@ -168,7 +169,7 @@ Example output:
 - **ID:** `Acme\Context\ArchitectureRules::I18n`
 - **Owner:** Team-Architecture
 - **Why:** Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.
-- **Proof:** src/Tests/I18nTest.php
+- **Proof:** Acme\Tests\I18nTest
 - **Refs:** docs/adr/i18n.md
 ```
 

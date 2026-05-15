@@ -6,6 +6,7 @@ namespace ItpContextExample\Context;
 
 use ItpContext\Enum\Tier;
 use ItpContext\Model\RuleDef;
+use ItpContextExample\Tests\I18nTest;
 
 return [
     'ViewAbstraction' => new RuleDef(
@@ -20,7 +21,7 @@ return [
         tier: Tier::Standard,
         owner: 'Team-Architecture',
         rationale: 'Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.',
-        verifiedBy: ['src/Tests/I18nTest.php'],
+        verifiedBy: [I18nTest::class],
         refs: ['docs/adr/i18n.md'],
     ),
 ];
