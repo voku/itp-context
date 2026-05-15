@@ -119,7 +119,7 @@ $frontmatter = ItpContext\Service\Frontmatter::parse(
 if (
     ($frontmatter['source_path'] ?? null) !== 'src/Service/ContextExporter.php'
     ||
-    ($frontmatter['owners'] ?? []) !== []
+    ($frontmatter['owners'] ?? []) !== ['Team-ItpContext']
     ||
     !file_exists($exportBaseDir . '/index.md')
 ) {

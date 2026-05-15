@@ -47,7 +47,9 @@ final class ContextResolverTest extends TestCase
 
         self::assertInstanceOf(RuleDef::class, $definition);
         self::assertSame('Match *Rules.php enums with sibling *Catalog.php files by convention.', $definition->statement);
-        self::assertNull($definition->owner);
+        self::assertSame('Team-ItpContext', $definition->owner);
+        self::assertSame(['tests/ContextResolverTest.php', 'tests/ValidatorTest.php'], $definition->verifiedBy);
+        self::assertSame(['docs/skills/itp-context.md', 'README.md'], $definition->refs);
     }
 
     public function testResolveRejectsOrphanedRuleIds(): void

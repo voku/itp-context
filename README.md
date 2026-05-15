@@ -88,13 +88,15 @@ return [
         statement: 'Use a dedicated view abstraction for rendering.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
+        rationale: 'A dedicated view layer keeps rendering concerns isolated from domain and controller code.',
         refs: ['docs/adr/view-abstraction.md', 'docs/ui/rendering.md'],
     ),
     'I18n' => new RuleDef(
-        statement: 'Use translated labels and locale-aware formatting.',
+        statement: 'Use locale-aware formatting and translated UI labels.',
         tier: Tier::Standard,
         owner: 'Team-Architecture',
-        verifiedBy: ['tests/Unit/I18nTest.php'],
+        rationale: 'Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.',
+        verifiedBy: ['src/Tests/I18nTest.php'],
         refs: ['docs/adr/i18n.md'],
     ),
 ];
@@ -158,13 +160,15 @@ Example output:
 ### [INFO] Use a dedicated view abstraction for rendering.
 - **ID:** `Acme\Context\ArchitectureRules::ViewAbstraction`
 - **Owner:** Team-Architecture
+- **Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.
 - **Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md
 
 ## Method: `render`
-### [INFO] Use translated labels and locale-aware formatting.
+### [INFO] Use locale-aware formatting and translated UI labels.
 - **ID:** `Acme\Context\ArchitectureRules::I18n`
 - **Owner:** Team-Architecture
-- **Proof:** tests/Unit/I18nTest.php
+- **Why:** Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.
+- **Proof:** src/Tests/I18nTest.php
 - **Refs:** docs/adr/i18n.md
 ```
 
