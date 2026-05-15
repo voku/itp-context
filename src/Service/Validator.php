@@ -9,7 +9,7 @@ use ItpContext\Context\PackageRules;
 use ItpContext\Contract\RuleIdentifier;
 use ReflectionEnum;
 
-#[Rule(PackageRules::CatalogByConvention)]
+#[Rule(PackageRules::InlineRuleDefinitions)]
 final class Validator
 {
     public function __construct(private ContextResolver $resolver = new ContextResolver())

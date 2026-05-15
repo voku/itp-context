@@ -8,7 +8,7 @@ Portable coding-agent usage guidance lives in `docs/skills/itp-context.md`. Keep
 
 ## Boundaries
 
-- Keep host-project enums and catalogs out of `src/`.
+- Keep host-project rule enums out of `src/`.
 - Do not introduce dependencies on IT-Portal helper functions or globals.
 - Prefer standard PHP library functions and narrow public APIs.
 - Keep CLI tools as thin wrappers around the service classes.

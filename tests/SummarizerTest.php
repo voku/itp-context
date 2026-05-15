@@ -195,27 +195,23 @@ enum TierRules implements \ItpContext\Contract\RuleIdentifier
 {
     case CriticalRule;
     case ImportantRule;
+
+    public function getDefinition(): \ItpContext\Model\RuleDef
+    {
+        return match (\$this) {
+            self::CriticalRule => new \ItpContext\Model\RuleDef(
+                statement: 'Critical statement.',
+                tier: \ItpContext\Enum\Tier::Critical,
+                owner: 'Team-Critical',
+                verifiedBy: [\ItpContext\Tests\SummarizerTest::class],
+            ),
+            self::ImportantRule => new \ItpContext\Model\RuleDef(
+                statement: 'Important statement.',
+                tier: \ItpContext\Enum\Tier::Important,
+            ),
+        };
+    }
 }
-PHP);
-        $this->writeFixtureFile('TierCatalog.php', <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace {$namespace};
-
-return [
-    'CriticalRule' => new \ItpContext\Model\RuleDef(
-        statement: 'Critical statement.',
-        tier: \ItpContext\Enum\Tier::Critical,
-        owner: 'Team-Critical',
-        verifiedBy: [\ItpContext\Tests\SummarizerTest::class],
-    ),
-    'ImportantRule' => new \ItpContext\Model\RuleDef(
-        statement: 'Important statement.',
-        tier: \ItpContext\Enum\Tier::Important,
-    ),
-];
 PHP);
         $criticalFile = $this->writeFixtureFile('CriticalSubject.php', <<<PHP
 <?php
@@ -268,18 +264,15 @@ enum MixedRules implements \ItpContext\Contract\RuleIdentifier
 {
     case ValidRule;
     case MissingRule;
+
+    public function getDefinition(): \ItpContext\Model\RuleDef
+    {
+        return match (\$this) {
+            self::ValidRule => new \ItpContext\Model\RuleDef('Valid statement.'),
+            self::MissingRule => throw new \RuntimeException('Broken definition.'),
+        };
+    }
 }
-PHP);
-        $this->writeFixtureFile('MixedCatalog.php', <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace {$namespace};
-
-return [
-    'ValidRule' => new \ItpContext\Model\RuleDef('Valid statement.'),
-];
 PHP);
         $filePath = $this->writeFixtureFile('MixedSubject.php', <<<PHP
 <?php

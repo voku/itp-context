@@ -22,19 +22,21 @@ final class GeneratorTest extends TestCase
         $this->removeDirectory($this->generatedPath);
     }
 
-    public function testHandleCreatesEnumAndCatalogFiles(): void
+    public function testHandleCreatesEnumFileWithInlineDefinition(): void
     {
         $this->expectOutputRegex('/Created rule: Smoke\\\\Context\\\\ExampleRules::SecurityBoundary/');
 
         (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
 
         self::assertFileExists($this->generatedPath . '/ExampleRules.php');
-        self::assertFileExists($this->generatedPath . '/ExampleCatalog.php');
-        self::assertStringContainsString('case SecurityBoundary;', (string) file_get_contents($this->generatedPath . '/ExampleRules.php'));
-        self::assertStringContainsString("'SecurityBoundary' => new RuleDef(", (string) file_get_contents($this->generatedPath . '/ExampleCatalog.php'));
-        self::assertStringContainsString("rationale: 'TODO: Explain why this rule exists.'", (string) file_get_contents($this->generatedPath . '/ExampleCatalog.php'));
-        self::assertStringContainsString("verifiedBy: ['tests/Architecture/SecurityBoundaryTest.php']", (string) file_get_contents($this->generatedPath . '/ExampleCatalog.php'));
-        self::assertStringContainsString("refs: ['docs/adr/security-boundary.md']", (string) file_get_contents($this->generatedPath . '/ExampleCatalog.php'));
+
+        $content = (string) file_get_contents($this->generatedPath . '/ExampleRules.php');
+        self::assertStringContainsString('case SecurityBoundary;', $content);
+        self::assertStringContainsString('public function getDefinition(): RuleDef', $content);
+        self::assertStringContainsString('self::SecurityBoundary => new RuleDef(', $content);
+        self::assertStringContainsString("rationale: 'TODO: Explain why this rule exists.'", $content);
+        self::assertStringContainsString("verifiedBy: ['tests/Architecture/SecurityBoundaryTest.php']", $content);
+        self::assertStringContainsString("refs: ['docs/adr/security-boundary.md']", $content);
     }
 
     public function testHandleRejectsMissingArguments(): void
@@ -57,13 +59,12 @@ final class GeneratorTest extends TestCase
         (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
 
         $enumContent = (string) file_get_contents($this->generatedPath . '/ExampleRules.php');
-        $catalogContent = (string) file_get_contents($this->generatedPath . '/ExampleCatalog.php');
 
         self::assertSame(1, substr_count($enumContent, 'case SecurityBoundary;'));
-        self::assertSame(1, substr_count($catalogContent, "'SecurityBoundary' => new RuleDef("));
+        self::assertSame(1, substr_count($enumContent, 'self::SecurityBoundary => new RuleDef('));
     }
 
-    public function testHandlePreservesExistingFiles(): void
+    public function testHandlePreservesExistingEnumFiles(): void
     {
         $this->expectOutputRegex('/Created rule: Smoke\\\\Context\\\\ExampleRules::SecurityBoundary/');
 
@@ -82,33 +83,19 @@ enum ExampleRules implements RuleIdentifier
     case ExistingRule;
 }
 PHP);
-        file_put_contents($this->generatedPath . '/ExampleCatalog.php', <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace Smoke\Context;
-
-use ItpContext\Enum\Tier;
-use ItpContext\Model\RuleDef;
-
-return [
-    'ExistingRule' => new RuleDef(
-        statement: 'Existing rule.',
-        tier: Tier::Standard,
-        owner: 'Team-Example',
-    ),
-];
-PHP);
 
         (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
 
-        self::assertStringContainsString('case ExistingRule;', (string) file_get_contents($this->generatedPath . '/ExampleRules.php'));
-        self::assertStringContainsString("'ExistingRule' => new RuleDef(", (string) file_get_contents($this->generatedPath . '/ExampleCatalog.php'));
+        $content = (string) file_get_contents($this->generatedPath . '/ExampleRules.php');
+        self::assertStringContainsString('case ExistingRule;', $content);
+        self::assertStringContainsString('case SecurityBoundary;', $content);
+        self::assertStringContainsString('self::SecurityBoundary => new RuleDef(', $content);
     }
 
-    public function testHandleRejectsMalformedCatalogFiles(): void
+    public function testHandleAppendsDefinitionsForAdditionalRules(): void
     {
+        $this->expectOutputRegex('/Created rule: Smoke\\\\Context\\\\ExampleRules::SecurityBoundary/');
+
         mkdir($this->generatedPath, 0777, true);
         file_put_contents($this->generatedPath . '/ExampleRules.php', <<<PHP
 <?php
@@ -118,15 +105,40 @@ declare(strict_types=1);
 namespace Smoke\Context;
 
 use ItpContext\Contract\RuleIdentifier;
+use ItpContext\Enum\Tier;
+use ItpContext\Model\RuleDef;
 
 enum ExampleRules implements RuleIdentifier
 {
+    case ExistingRule;
+
+    public function getDefinition(): RuleDef
+    {
+        return match (\$this) {
+            self::ExistingRule => new RuleDef(
+                statement: 'Existing rule.',
+                tier: Tier::Standard,
+                owner: 'Team-Example',
+            ),
+        };
+    }
 }
 PHP);
-        file_put_contents($this->generatedPath . '/ExampleCatalog.php', "<?php\nreturn [\n");
+
+        (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
+
+        $content = (string) file_get_contents($this->generatedPath . '/ExampleRules.php');
+        self::assertStringContainsString('self::ExistingRule => new RuleDef(', $content);
+        self::assertStringContainsString('self::SecurityBoundary => new RuleDef(', $content);
+    }
+
+    public function testHandleRejectsMalformedEnumFiles(): void
+    {
+        mkdir($this->generatedPath, 0777, true);
+        file_put_contents($this->generatedPath . '/ExampleRules.php', "<?php\n\nenum ExampleRules implements \\ItpContext\\Contract\\RuleIdentifier\n{\n");
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("Malformed catalog (missing '];')");
+        $this->expectExceptionMessage('Malformed enum');
 
         (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
     }
@@ -146,30 +158,6 @@ PHP);
     public function testHandleRejectsUnreadableEnumFiles(): void
     {
         mkdir($this->generatedPath . '/ExampleRules.php', 0777, true);
-
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Failed to read');
-
-        (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
-    }
-
-    public function testHandleRejectsUnreadableCatalogFiles(): void
-    {
-        mkdir($this->generatedPath, 0777, true);
-        file_put_contents($this->generatedPath . '/ExampleRules.php', <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace Smoke\Context;
-
-use ItpContext\Contract\RuleIdentifier;
-
-enum ExampleRules implements RuleIdentifier
-{
-}
-PHP);
-        mkdir($this->generatedPath . '/ExampleCatalog.php', 0777, true);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to read');

@@ -37,9 +37,9 @@ final class ContextExporterTest extends TestCase
         );
 
         self::assertInstanceOf(ExportReport::class, $report);
-        self::assertSame(4, $report->scannedFileCount);
+        self::assertSame(3, $report->scannedFileCount);
         self::assertSame(1, $report->exportedDocumentCount);
-        self::assertSame(3, $report->skippedFileCount);
+        self::assertSame(2, $report->skippedFileCount);
         self::assertSame([], $report->errors);
 
         $symbolExport = $this->exportPath . '/php/ItpContextExample_DashboardView.md';

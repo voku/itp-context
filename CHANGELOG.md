@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- moved rule definitions onto `RuleIdentifier` enums via `getDefinition()` and removed sibling catalog files from the example, generator and resolver flow
 - added `ContextReader` and token-based degraded summaries so multi-symbol files, functions and non-autoloadable code still expose context
 - added richer export metadata (`owners`, `refs`, `verified_by`, `annotated_methods`, `rule_count`) plus a queryable export index
 - added `ContextQuery` and the `itp-context-query` CLI for searching exported context documents

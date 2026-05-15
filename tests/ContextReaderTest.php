@@ -209,18 +209,13 @@ namespace {$namespace};
 enum {$name}Rules implements \ItpContext\Contract\RuleIdentifier
 {
     case Missing;
+
+    public function getDefinition(): \ItpContext\Model\RuleDef
+    {
+        throw new \RuntimeException('Broken definition.');
+    }
 }
 PHP);
-        file_put_contents($this->fixturePath . '/' . $name . 'Catalog.php', <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace {$namespace};
-
-return [];
-PHP);
-
         require_once $enumPath;
 
         return $enumClass;
