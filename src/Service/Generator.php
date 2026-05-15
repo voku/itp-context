@@ -117,6 +117,8 @@ PHP;
         statement: 'TODO: Define rule statement.',
         tier: Tier::Standard,
         owner: 'Team-{$domain}',
+        rationale: 'TODO: Explain why this rule exists.',
+        verifiedBy: ['tests/Architecture/{$ruleName}Test.php'],
         refs: ['docs/adr/{$this->toKebabCase($ruleName)}.md'],
     ),
 PHP;

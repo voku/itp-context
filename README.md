@@ -286,6 +286,8 @@ This creates or extends:
 - `src/Context/ArchitectureRules.php`
 - `src/Context/ArchitectureCatalog.php`
 
+The generated catalog entry seeds `statement`, `owner`, `rationale`, `verifiedBy`, and `refs` placeholders so new rules start with a fuller definition.
+
 ### `itp-context-export`
 
 ```shell
