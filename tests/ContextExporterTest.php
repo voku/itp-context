@@ -88,7 +88,7 @@ final class ContextExporterTest extends TestCase
         );
 
         self::assertSame([], $report->errors);
-        self::assertSame(7, $report->exportedDocumentCount);
+        self::assertSame(8, $report->exportedDocumentCount);
         self::assertSame(
             'src/Service/ContextExporter.php',
             Frontmatter::parse(
@@ -110,6 +110,15 @@ final class ContextExporterTest extends TestCase
         self::assertStringContainsString(
             PackageRules::AgentFriendlyMarkdown->name,
             (string) file_get_contents($this->exportPath . '/php/ItpContext_Service_ContextExporter.md')
+        );
+        self::assertSame(
+            [
+                'ItpContext\\Context\\PackageRules::FrameworkAgnostic',
+                'ItpContext\\Context\\PackageRules::InlineRuleDefinitions',
+            ],
+            Frontmatter::parse(
+                (string) file_get_contents($this->exportPath . '/php/ItpContext_Service_Generator.md')
+            )['rule_ids']
         );
     }
 

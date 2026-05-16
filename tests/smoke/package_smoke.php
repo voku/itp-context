@@ -107,7 +107,7 @@ if ($exitCode !== 0) {
     exit(1);
 }
 
-if (!isset($output[0]) || !str_contains($output[0], 'Exported 7 context documents')) {
+if (!isset($output[0]) || !str_contains($output[0], 'Exported 8 context documents')) {
     fwrite(STDERR, "Context export CLI produced unexpected output.\n");
     exit(1);
 }

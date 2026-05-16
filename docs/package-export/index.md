@@ -26,6 +26,11 @@ Exported context documents for PHP symbols annotated with `#[Rule(...)]`.
   - owners: Team-ItpContext
   - refs: AGENTS.md, README.md, docs/skills/itp-context.md
   - proof: ItpContext\Tests\ContextResolverTest, ItpContext\Tests\ValidatorTest
+- [ItpContext\Service\Generator](php/ItpContext_Service_Generator.md) (class) - `src/Service/Generator.php`
+  - rules: `ItpContext\Context\PackageRules::FrameworkAgnostic`, `ItpContext\Context\PackageRules::InlineRuleDefinitions`
+  - owners: Team-ItpContext
+  - refs: AGENTS.md, README.md, docs/skills/itp-context.md
+  - proof: ItpContext\Tests\ContextResolverTest, ItpContext\Tests\ValidatorTest
 - [ItpContext\Service\Summarizer](php/ItpContext_Service_Summarizer.md) (class) - `src/Service/Summarizer.php`
   - rules: `ItpContext\Context\PackageRules::DegradedDiscovery`
   - owners: Team-ItpContext

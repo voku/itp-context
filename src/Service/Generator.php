@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace ItpContext\Service;
 
+use ItpContext\Attribute\Rule;
+use ItpContext\Context\PackageRules;
 use RuntimeException;
 
+#[Rule(PackageRules::FrameworkAgnostic)]
+#[Rule(PackageRules::InlineRuleDefinitions)]
 final class Generator
 {
     public function handle(?string $domain, ?string $ruleName, ?string $baseDir = null, ?string $baseNamespace = null): void
