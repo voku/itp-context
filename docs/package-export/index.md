@@ -22,7 +22,12 @@ Exported context documents for PHP symbols annotated with `#[Rule(...)]`.
   - refs: README.md
   - proof: ItpContext\Tests\ContextReaderTest, ItpContext\Tests\SummarizerTest
 - [ItpContext\Service\ContextResolver](php/ItpContext_Service_ContextResolver.md) (class) - `src/Service/ContextResolver.php`
-  - rules: `ItpContext\Context\PackageRules::CatalogByConvention`, `ItpContext\Context\PackageRules::FrameworkAgnostic`
+  - rules: `ItpContext\Context\PackageRules::FrameworkAgnostic`, `ItpContext\Context\PackageRules::InlineRuleDefinitions`
+  - owners: Team-ItpContext
+  - refs: AGENTS.md, README.md, docs/skills/itp-context.md
+  - proof: ItpContext\Tests\ContextResolverTest, ItpContext\Tests\ValidatorTest
+- [ItpContext\Service\Generator](php/ItpContext_Service_Generator.md) (class) - `src/Service/Generator.php`
+  - rules: `ItpContext\Context\PackageRules::FrameworkAgnostic`, `ItpContext\Context\PackageRules::InlineRuleDefinitions`
   - owners: Team-ItpContext
   - refs: AGENTS.md, README.md, docs/skills/itp-context.md
   - proof: ItpContext\Tests\ContextResolverTest, ItpContext\Tests\ValidatorTest
@@ -37,7 +42,7 @@ Exported context documents for PHP symbols annotated with `#[Rule(...)]`.
   - refs: README.md
   - proof: ItpContext\Tests\TokenParserTest
 - [ItpContext\Service\Validator](php/ItpContext_Service_Validator.md) (class) - `src/Service/Validator.php`
-  - rules: `ItpContext\Context\PackageRules::CatalogByConvention`
+  - rules: `ItpContext\Context\PackageRules::InlineRuleDefinitions`
   - owners: Team-ItpContext
   - refs: README.md, docs/skills/itp-context.md
   - proof: ItpContext\Tests\ContextResolverTest, ItpContext\Tests\ValidatorTest

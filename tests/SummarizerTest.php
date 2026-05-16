@@ -177,6 +177,36 @@ PHP);
         self::assertSame(['File not found: ' . $this->fixturePath . '/missing.php'], $output);
     }
 
+    public function testCliWritesOnlyTheErrorMessageToStderrAndExitsWithCodeOne(): void
+    {
+        $command = [
+            PHP_BINARY,
+            dirname(__DIR__) . '/bin/itp-context-summarize',
+            $this->fixturePath . '/missing.php',
+        ];
+
+        $process = proc_open(
+            $command,
+            [
+                1 => ['pipe', 'w'],
+                2 => ['pipe', 'w'],
+            ],
+            $pipes
+        );
+
+        self::assertIsResource($process);
+
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+
+        self::assertSame('', $stdout);
+        self::assertSame('File not found: ' . $this->fixturePath . "/missing.php\n", $stderr);
+        self::assertSame(1, $exitCode);
+    }
+
     /**
      * @return array{0: string, 1: string}
      */
@@ -195,27 +225,23 @@ enum TierRules implements \ItpContext\Contract\RuleIdentifier
 {
     case CriticalRule;
     case ImportantRule;
+
+    public function getDefinition(): \ItpContext\Model\RuleDef
+    {
+        return match (\$this) {
+            self::CriticalRule => new \ItpContext\Model\RuleDef(
+                statement: 'Critical statement.',
+                tier: \ItpContext\Enum\Tier::Critical,
+                owner: 'Team-Critical',
+                verifiedBy: [\ItpContext\Tests\SummarizerTest::class],
+            ),
+            self::ImportantRule => new \ItpContext\Model\RuleDef(
+                statement: 'Important statement.',
+                tier: \ItpContext\Enum\Tier::Important,
+            ),
+        };
+    }
 }
-PHP);
-        $this->writeFixtureFile('TierCatalog.php', <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace {$namespace};
-
-return [
-    'CriticalRule' => new \ItpContext\Model\RuleDef(
-        statement: 'Critical statement.',
-        tier: \ItpContext\Enum\Tier::Critical,
-        owner: 'Team-Critical',
-        verifiedBy: [\ItpContext\Tests\SummarizerTest::class],
-    ),
-    'ImportantRule' => new \ItpContext\Model\RuleDef(
-        statement: 'Important statement.',
-        tier: \ItpContext\Enum\Tier::Important,
-    ),
-];
 PHP);
         $criticalFile = $this->writeFixtureFile('CriticalSubject.php', <<<PHP
 <?php
@@ -268,18 +294,15 @@ enum MixedRules implements \ItpContext\Contract\RuleIdentifier
 {
     case ValidRule;
     case MissingRule;
+
+    public function getDefinition(): \ItpContext\Model\RuleDef
+    {
+        return match (\$this) {
+            self::ValidRule => new \ItpContext\Model\RuleDef('Valid statement.'),
+            self::MissingRule => throw new \RuntimeException('Broken definition.'),
+        };
+    }
 }
-PHP);
-        $this->writeFixtureFile('MixedCatalog.php', <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace {$namespace};
-
-return [
-    'ValidRule' => new \ItpContext\Model\RuleDef('Valid statement.'),
-];
 PHP);
         $filePath = $this->writeFixtureFile('MixedSubject.php', <<<PHP
 <?php

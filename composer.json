@@ -1,15 +1,15 @@
 {
   "name": "voku/itp-context",
-  "description": "Architecture context attributes, catalogs, validation and summarization helpers for PHP projects.",
+  "description": "Architecture context attributes, inline enum rule definitions, validation and summarization helpers for PHP projects.",
   "type": "library",
   "keywords": [
     "architecture",
     "attribute",
-    "catalog",
     "context",
     "enum",
     "php",
-    "rule"
+    "rule",
+    "rules"
   ],
   "homepage": "https://github.com/voku/itp-context",
   "license": "MIT",

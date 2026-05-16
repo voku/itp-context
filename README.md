@@ -4,17 +4,17 @@
 
 # 🎯 itp-context
 
-A small PHP library for attaching architecture rules to code via PHP attributes and resolving those rules from a matching catalog.
+A small PHP library for attaching architecture rules to code via PHP attributes and resolving those rules directly from typed enums.
 
 It gives you:
 - typed rule identifiers via enums
 - repeatable `#[Rule(...)]` attributes for classes, methods and functions
-- rule catalogs with ownership, rationale, references and proof metadata
-- validation helpers for stale or orphaned catalog entries
+- inline enum rule definitions with ownership, rationale, references and proof metadata
+- validation helpers for broken or incomplete rule definitions
 - summary output for annotated PHP symbols, including multiple symbols per file
 - compact markdown context exports with searchable metadata for coding agents and repository assistants
 - a small query helper for searching exported context by rule, owner, proof, refs or free text
-- a small generator for bootstrapping new rule enums and catalogs
+- a small generator for bootstrapping new rule enums
 
 ## Index
 
@@ -37,9 +37,9 @@ composer require voku/itp-context
 
 When architecture guidance only lives in ADRs and wikis, it drifts away from the code that is supposed to follow it.
 
-`itp-context` keeps the rule identifier in the code, the rule definition in a nearby catalog, and supporting context references in one typed structure. That gives you a compact way to:
+`itp-context` keeps the rule identifier, definition, and supporting context references together in one typed enum instead of splitting them across sibling catalog files. That gives you a compact way to:
 - attach architecture intent to classes, methods and functions
-- validate whether enum cases and catalog entries still match
+- validate whether enum cases still expose usable definitions
 - summarize relevant architecture context for one PHP file
 
 The goal is to add context **without burning tokens**:
@@ -58,52 +58,42 @@ declare(strict_types=1);
 
 namespace Acme\Context;
 
+use Acme\Tests\I18nTest;
 use ItpContext\Contract\RuleIdentifier;
+use ItpContext\Enum\Tier;
+use ItpContext\Model\RuleDef;
 
 enum ArchitectureRules implements RuleIdentifier
 {
     case ViewAbstraction;
     case I18n;
+
+    public function getDefinition(): RuleDef
+    {
+        return match ($this) {
+            self::ViewAbstraction => new RuleDef(
+                statement: 'Use a dedicated view abstraction for rendering.',
+                tier: Tier::Standard,
+                owner: 'Team-Architecture',
+                rationale: 'A dedicated view layer keeps rendering concerns isolated from domain and controller code.',
+                refs: ['docs/adr/view-abstraction.md', 'docs/ui/rendering.md'],
+            ),
+            self::I18n => new RuleDef(
+                statement: 'Use locale-aware formatting and translated UI labels.',
+                tier: Tier::Standard,
+                owner: 'Team-Architecture',
+                rationale: 'Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.',
+                verifiedBy: [I18nTest::class],
+                refs: ['docs/adr/i18n.md'],
+            ),
+        };
+    }
 }
 ```
 
-### 2. Add the matching catalog
+Use `refs` for the context you want nearby: ADRs, docs, design notes, diagrams, tickets or related code.
 
-Convention:
-- `ArchitectureRules.php` -> `ArchitectureCatalog.php`
-- use `refs` for the context you want nearby: ADRs, docs, design notes, diagrams, tickets or related code
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace Acme\Context;
-
-use Acme\Tests\I18nTest;
-use ItpContext\Enum\Tier;
-use ItpContext\Model\RuleDef;
-
-return [
-    'ViewAbstraction' => new RuleDef(
-        statement: 'Use a dedicated view abstraction for rendering.',
-        tier: Tier::Standard,
-        owner: 'Team-Architecture',
-        rationale: 'A dedicated view layer keeps rendering concerns isolated from domain and controller code.',
-        refs: ['docs/adr/view-abstraction.md', 'docs/ui/rendering.md'],
-    ),
-    'I18n' => new RuleDef(
-        statement: 'Use locale-aware formatting and translated UI labels.',
-        tier: Tier::Standard,
-        owner: 'Team-Architecture',
-        rationale: 'Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.',
-        verifiedBy: [I18nTest::class],
-        refs: ['docs/adr/i18n.md'],
-    ),
-];
-```
-
-### 3. Annotate your code
+### 2. Annotate your code
 
 Keep annotations selective: tag the classes or methods where architecture context changes decisions, not every file.
 
@@ -128,7 +118,7 @@ final class DashboardView
 }
 ```
 
-### 4. Validate the enum/catalog integrity
+### 3. Validate the enum definitions
 
 ```php
 <?php
@@ -141,7 +131,9 @@ use ItpContext\Service\Validator;
 $errors = (new Validator())->validateEnumClass(ArchitectureRules::class);
 ```
 
-### 5. Summarize one file
+Validation walks every enum case and calls `getDefinition()`, so broken match arms or incomplete inline definitions fail in one place.
+
+### 4. Summarize one file
 
 ```php
 <?php
@@ -173,7 +165,7 @@ Example output:
 - **Refs:** docs/adr/i18n.md
 ```
 
-### 6. Export agent-friendly context for a source tree
+### 5. Export agent-friendly context for a source tree
 
 ```php
 <?php
@@ -246,11 +238,10 @@ This package only contains generic framework code under the `ItpContext\\` names
 
 Your project-specific files stay in your own codebase, for example:
 - `src/Context/ArchitectureRules.php`
-- `src/Context/ArchitectureCatalog.php`
 
 A minimal example project is included under `examples/basic-domain`, and the repository's self-export snapshot lives under `docs/package-export`.
 
-The example project also includes sample context docs under `examples/basic-domain/docs/`, including ADR-style notes referenced from the catalog.
+The example project also includes sample context docs under `examples/basic-domain/docs/`, including ADR-style notes referenced from the enum definitions.
 
 ## Portable agent skills
 
@@ -289,9 +280,8 @@ vendor/bin/itp-context-generate Architecture SecurityBoundary src/Context Acme\\
 
 This creates or extends:
 - `src/Context/ArchitectureRules.php`
-- `src/Context/ArchitectureCatalog.php`
 
-The generated catalog entry seeds `statement`, `owner`, `rationale`, `verifiedBy`, and `refs` placeholders so new rules start with a fuller definition.
+The generator only updates the enum: it adds the new case plus a matching `getDefinition()` arm and seeds `statement`, `owner`, `rationale`, `verifiedBy`, and `refs` placeholders so new rules start with a fuller definition.
 
 ### `itp-context-export`
 

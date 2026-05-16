@@ -49,7 +49,7 @@ if (!str_contains($output, 'ViewAbstraction') || !str_contains($output, 'I18n'))
 }
 
 $packageOutput = $summarizer->summarize($root . '/src/Service/ContextResolver.php');
-if (!str_contains($packageOutput, 'PackageRules::FrameworkAgnostic') || !str_contains($packageOutput, 'PackageRules::CatalogByConvention')) {
+if (!str_contains($packageOutput, 'PackageRules::FrameworkAgnostic') || !str_contains($packageOutput, 'PackageRules::InlineRuleDefinitions')) {
     fwrite(STDERR, "Unexpected package summary output.\n");
     exit(1);
 }
@@ -80,7 +80,7 @@ $removeDirectory($generatorBaseDir);
 
 (new ItpContext\Service\Generator())->handle('Example', 'SecurityBoundary', $generatorBaseDir, 'Smoke\\Context');
 
-if (!file_exists($generatorBaseDir . '/ExampleRules.php') || !file_exists($generatorBaseDir . '/ExampleCatalog.php')) {
+if (!file_exists($generatorBaseDir . '/ExampleRules.php')) {
     fwrite(STDERR, "Generator did not create the expected files.\n");
     exit(1);
 }
@@ -107,7 +107,7 @@ if ($exitCode !== 0) {
     exit(1);
 }
 
-if (!isset($output[0]) || !str_contains($output[0], 'Exported 7 context documents')) {
+if (!isset($output[0]) || !str_contains($output[0], 'Exported 8 context documents')) {
     fwrite(STDERR, "Context export CLI produced unexpected output.\n");
     exit(1);
 }

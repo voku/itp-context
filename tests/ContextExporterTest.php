@@ -37,9 +37,9 @@ final class ContextExporterTest extends TestCase
         );
 
         self::assertInstanceOf(ExportReport::class, $report);
-        self::assertSame(4, $report->scannedFileCount);
+        self::assertSame(3, $report->scannedFileCount);
         self::assertSame(1, $report->exportedDocumentCount);
-        self::assertSame(3, $report->skippedFileCount);
+        self::assertSame(2, $report->skippedFileCount);
         self::assertSame([], $report->errors);
 
         $symbolExport = $this->exportPath . '/php/ItpContextExample_DashboardView.md';
@@ -88,7 +88,7 @@ final class ContextExporterTest extends TestCase
         );
 
         self::assertSame([], $report->errors);
-        self::assertSame(7, $report->exportedDocumentCount);
+        self::assertSame(8, $report->exportedDocumentCount);
         self::assertSame(
             'src/Service/ContextExporter.php',
             Frontmatter::parse(
@@ -110,6 +110,15 @@ final class ContextExporterTest extends TestCase
         self::assertStringContainsString(
             PackageRules::AgentFriendlyMarkdown->name,
             (string) file_get_contents($this->exportPath . '/php/ItpContext_Service_ContextExporter.md')
+        );
+        self::assertSame(
+            [
+                'ItpContext\\Context\\PackageRules::FrameworkAgnostic',
+                'ItpContext\\Context\\PackageRules::InlineRuleDefinitions',
+            ],
+            Frontmatter::parse(
+                (string) file_get_contents($this->exportPath . '/php/ItpContext_Service_Generator.md')
+            )['rule_ids']
         );
     }
 
@@ -185,6 +194,37 @@ final class ContextExporterTest extends TestCase
 
         self::assertSame([$brokenFile . ': Fixture failure.'], $report->errors);
         self::assertGreaterThan(0, $report->exportedDocumentCount);
+    }
+
+    public function testExportSkipsFilesWithoutSymbolsAndContinuesWithLaterFiles(): void
+    {
+        $sourceDir = $this->exportPath . '/mixed-source';
+        mkdir($sourceDir, 0777, true);
+
+        file_put_contents($sourceDir . '/NoSymbols.php', "<?php\n\$value = 1;\n");
+        file_put_contents($sourceDir . '/DashboardView.php', <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace MixedSource;
+
+use ItpContext\Attribute\Rule;
+use ItpContextExample\Context\ArchitectureRules;
+
+#[Rule(ArchitectureRules::ViewAbstraction)]
+final class DashboardView
+{
+}
+PHP);
+
+        $report = (new ContextExporter())->export($this->exportPath . '-result', [$sourceDir]);
+
+        self::assertSame(2, $report->scannedFileCount);
+        self::assertSame(1, $report->exportedDocumentCount);
+        self::assertSame(1, $report->skippedFileCount);
+        self::assertSame([], $report->errors);
+        self::assertFileExists($this->exportPath . '-result/php/MixedSource_DashboardView.md');
     }
 
     public function testExportCreatesEmptyIndexWhenNoAnnotatedSymbolsExist(): void

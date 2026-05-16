@@ -30,9 +30,14 @@ final class TokenParserTest extends TestCase
 
     public function testGetFirstSymbolFromFileSkipsClassConstantReferences(): void
     {
-        $symbol = (new TokenParser())->getFirstSymbolFromFile(
-            dirname(__DIR__) . '/examples/basic-domain/src/Context/ArchitectureCatalog.php'
-        );
+        $path = $this->writePhpFile(<<<'PHP'
+return [
+    \ItpContext\Tests\TokenParserTest::class,
+    \ItpContext\Tests\ContextResolverTest::class,
+];
+PHP);
+
+        $symbol = (new TokenParser())->getFirstSymbolFromFile($path);
 
         self::assertNull($symbol);
     }
@@ -40,6 +45,14 @@ final class TokenParserTest extends TestCase
     public function testGetFirstSymbolFromFileReturnsNullForMissingFiles(): void
     {
         self::assertNull((new TokenParser())->getFirstSymbolFromFile($this->tmpPath . '/missing.php'));
+    }
+
+    public function testPublicAccessorsReturnEmptyListsForUnreadableFiles(): void
+    {
+        $path = $this->tmpPath . '/missing.php';
+
+        self::assertSame([], (new TokenParser())->getSymbolsFromFile($path));
+        self::assertSame([], (new TokenParser())->getRuleTargetsFromFile($path));
     }
 
     public function testGetFirstSymbolFromFileParsesMultiSegmentNamespaces(): void
