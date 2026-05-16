@@ -85,10 +85,12 @@ PHP;
 
     private function appendEnumCase(string $content, string $ruleName, string $path): string
     {
+        $lineEnding = $this->detectLineEnding($content);
+
         if (str_contains($content, 'public function getDefinition(): RuleDef')) {
             $updated = preg_replace(
-                '/\n(\s*)public function getDefinition\(\): RuleDef/',
-                "\n    case {$ruleName};\n\n$1public function getDefinition(): RuleDef",
+                '/\R(\s*)public function getDefinition\(\): RuleDef/',
+                $lineEnding . "    case {$ruleName};" . $lineEnding . $lineEnding . '$1' . 'public function getDefinition(): RuleDef',
                 $content,
                 1
             );
@@ -98,11 +100,12 @@ PHP;
             }
         }
 
-        return $this->insertBeforeFinalBrace($content, "    case {$ruleName};\n\n", $path);
+        return $this->insertBeforeFinalBrace($content, "    case {$ruleName};{$lineEnding}{$lineEnding}", $path);
     }
 
     private function appendDefinitionMethod(string $content, string $ruleName, string $domain, string $path): string
     {
+        $lineEnding = $this->detectLineEnding($content);
         $method = <<<PHP
     public function getDefinition(): RuleDef
     {
@@ -112,22 +115,23 @@ PHP;
 
 PHP;
 
-        return $this->insertBeforeFinalBrace($content, $method, $path);
+        return $this->insertBeforeFinalBrace($content, str_replace("\n", $lineEnding, $method), $path);
     }
 
     private function appendDefinitionArm(string $content, string $ruleName, string $domain, string $path): string
     {
-        $needle = "return match (\$this) {\n";
-        $position = strpos($content, $needle);
-        if ($position === false) {
+        $updated = preg_replace(
+            '/(return\s+match\s*\(\s*\$this\s*\)\s*\{\R)/',
+            '$1' . $this->renderDefinitionArm($ruleName, $domain),
+            $content,
+            1
+        );
+
+        if (!is_string($updated) || $updated === $content) {
             throw new RuntimeException("Malformed enum definition match: {$path}");
         }
 
-        $insertAt = $position + strlen($needle);
-
-        return substr($content, 0, $insertAt)
-            . $this->renderDefinitionArm($ruleName, $domain)
-            . substr($content, $insertAt);
+        return $updated;
     }
 
     private function renderDefinitionArm(string $ruleName, string $domain): string
@@ -152,9 +156,10 @@ PHP;
             return $content;
         }
 
+        $lineEnding = $this->detectLineEnding($content);
         $updated = preg_replace(
-            '/^(namespace [^;]+;\n(?:\n?use [^;]+;\n)*)/m',
-            "$1use {$fqcn};\n",
+            '/^(namespace [^;]+;\R(?:\R?use [^;]+;\R)*)/m',
+            '$1' . "use {$fqcn};{$lineEnding}",
             $content,
             1
         );
@@ -174,7 +179,7 @@ PHP;
             throw new RuntimeException("Malformed enum (missing closing brace): {$path}");
         }
 
-        return substr($trimmed, 0, $position) . $insertion . "}\n";
+        return substr($trimmed, 0, $position) . $insertion . '}' . $this->detectLineEnding($content);
     }
 
     private function ensureDirectoryExists(string $path): void
@@ -221,6 +226,11 @@ PHP;
         $message = $detail['message'] ?? null;
 
         return is_string($message) ? ' (' . $message . ')' : '';
+    }
+
+    private function detectLineEnding(string $content): string
+    {
+        return str_contains($content, "\r\n") ? "\r\n" : "\n";
     }
 
     private function toKebabCase(string $value): string

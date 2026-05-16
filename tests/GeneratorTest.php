@@ -105,8 +105,6 @@ declare(strict_types=1);
 namespace Smoke\Context;
 
 use ItpContext\Contract\RuleIdentifier;
-use ItpContext\Enum\Tier;
-use ItpContext\Model\RuleDef;
 
 enum ExampleRules implements RuleIdentifier
 {
@@ -130,6 +128,49 @@ PHP);
         $content = (string) file_get_contents($this->generatedPath . '/ExampleRules.php');
         self::assertStringContainsString('self::ExistingRule => new RuleDef(', $content);
         self::assertStringContainsString('self::SecurityBoundary => new RuleDef(', $content);
+    }
+
+    public function testHandleSupportsCrLfEnumFiles(): void
+    {
+        $this->expectOutputRegex('/Created rule: Smoke\\\\Context\\\\ExampleRules::SecurityBoundary/');
+
+        mkdir($this->generatedPath, 0777, true);
+        file_put_contents($this->generatedPath . '/ExampleRules.php', str_replace("\n", "\r\n", <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace Smoke\Context;
+
+use ItpContext\Contract\RuleIdentifier;
+use ItpContext\Enum\Tier;
+use ItpContext\Model\RuleDef;
+
+enum ExampleRules implements RuleIdentifier
+{
+    case ExistingRule;
+
+    public function getDefinition(): RuleDef
+    {
+        return match ($this) {
+            self::ExistingRule => new RuleDef(
+                statement: 'Existing rule.',
+                tier: Tier::Standard,
+                owner: 'Team-Example',
+            ),
+        };
+    }
+}
+PHP));
+
+        (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
+
+        $content = (string) file_get_contents($this->generatedPath . '/ExampleRules.php');
+
+        self::assertStringContainsString("\r\nuse ItpContext\\Enum\\Tier;\r\n", $content);
+        self::assertStringContainsString("\r\n    case SecurityBoundary;\r\n\r\n", $content);
+        self::assertStringContainsString("\r\nuse ItpContext\\Model\\RuleDef;\r\n", $content);
+        self::assertStringContainsString("return match (\$this) {\r\n            self::SecurityBoundary => new RuleDef(", $content);
     }
 
     public function testHandleRejectsMalformedEnumFiles(): void
@@ -261,7 +302,7 @@ namespace ItpContext\Service;
 
 function preg_replace($pattern, $replacement, $subject, $limit = -1)
 {
-    if ($pattern === '/^(namespace [^;]+;\n(?:\n?use [^;]+;\n)*)/m') {
+    if ($pattern === '/^(namespace [^;]+;\R(?:\R?use [^;]+;\R)*)/m') {
         return null;
     }
 
