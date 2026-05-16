@@ -37,7 +37,7 @@ composer require voku/itp-context
 
 When architecture guidance only lives in ADRs and wikis, it drifts away from the code that is supposed to follow it.
 
-`itp-context` keeps the rule identifier, definition, and supporting context references together in one typed enum. That gives you a compact way to:
+`itp-context` keeps the rule identifier, definition, and supporting context references together in one typed enum instead of splitting them across sibling catalog files. That gives you a compact way to:
 - attach architecture intent to classes, methods and functions
 - validate whether enum cases still expose usable definitions
 - summarize relevant architecture context for one PHP file
@@ -130,6 +130,8 @@ use ItpContext\Service\Validator;
 
 $errors = (new Validator())->validateEnumClass(ArchitectureRules::class);
 ```
+
+Validation walks every enum case and calls `getDefinition()`, so broken match arms or incomplete inline definitions fail in one place.
 
 ### 4. Summarize one file
 
@@ -279,7 +281,7 @@ vendor/bin/itp-context-generate Architecture SecurityBoundary src/Context Acme\\
 This creates or extends:
 - `src/Context/ArchitectureRules.php`
 
-The generated enum definition seeds `statement`, `owner`, `rationale`, `verifiedBy`, and `refs` placeholders so new rules start with a fuller definition.
+The generator only updates the enum: it adds the new case plus a matching `getDefinition()` arm and seeds `statement`, `owner`, `rationale`, `verifiedBy`, and `refs` placeholders so new rules start with a fuller definition.
 
 ### `itp-context-export`
 

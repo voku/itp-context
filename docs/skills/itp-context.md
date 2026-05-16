@@ -6,6 +6,7 @@ Use this package to keep architecture context close to PHP code in a compact, ty
 
 - Define a project-owned enum that implements `ItpContext\Contract\RuleIdentifier`.
 - Keep each enum case backed by a `getDefinition(): RuleDef` match arm on that enum.
+- Do not split rule data into sibling catalog files; the enum is the single source of truth.
 - Attach `#[ItpContext\Attribute\Rule(...)]` to the few classes, methods or functions where architecture context changes implementation choices.
 - Keep rules broad, stable and high-signal instead of tagging every symbol.
 
