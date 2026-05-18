@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 - moved rule definitions onto `RuleIdentifier` enums via `getDefinition()` and removed sibling catalog files from the example, generator and resolver flow
 - added `ContextReader` and token-based degraded summaries so multi-symbol files, functions and non-autoloadable code still expose context
