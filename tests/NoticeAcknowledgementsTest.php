@@ -96,33 +96,21 @@ final class NoticeAcknowledgementsTest extends TestCase
         self::assertSame('{"seen":["a"],"marker":1}', file_get_contents($file));
     }
 
-    /**
-     * @return array<string, array{string}>
-     */
-    public static function corruptContents(): array
-    {
-        return [
-            'not json' => ['not json'],
-            'scalar' => ['"x"'],
-            'null' => ['null'],
-            'no seen key' => ['{}'],
-            'seen is string' => ['{"seen":"x"}'],
-            'seen is object' => ['{"seen":{"a":"a"}}'],
-            'seen has non-string' => ['{"seen":[1]}'],
-        ];
-    }
-
-    #[\PHPUnit\Framework\Attributes\DataProvider('corruptContents')]
-    public function testCorruptStateVariantsFailLoudly(string $contents): void
+    public function testCorruptStateVariantsFailLoudly(): void
     {
         mkdir($this->stateDir);
         $file = $this->stateDir . '/state.json';
-        file_put_contents($file, $contents);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('is corrupt');
+        foreach (['not json', '"x"', 'null', '{}', '{"seen":"x"}', '{"seen":{"a":"a"}}', '{"seen":[1]}'] as $contents) {
+            file_put_contents($file, $contents);
 
-        (new NoticeAcknowledgements($file))->consume([$this->notice('a')]);
+            try {
+                (new NoticeAcknowledgements($file))->consume([$this->notice('a')]);
+                self::fail('Expected a RuntimeException for: ' . $contents);
+            } catch (RuntimeException $exception) {
+                self::assertStringContainsString('is corrupt', $exception->getMessage());
+            }
+        }
     }
 
     public function testUnreadableDirectoryFailsLoudly(): void
