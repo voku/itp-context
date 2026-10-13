@@ -219,7 +219,7 @@ final class ChangeImpactDetector
             return $this->git($repoDir, ['show', $headRef . ':' . $path]);
         }
 
-        $code = file_get_contents(rtrim($repoDir, '/') . '/' . $path);
+        $code = @file_get_contents(rtrim($repoDir, '/') . '/' . $path);
         if ($code === false) {
             throw new RuntimeException("Cannot read {$path}.");
         }

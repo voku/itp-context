@@ -134,6 +134,202 @@ final class ChangeImpactDetectorTest extends TestCase
         (new ChangeImpactDetector())->detect($this->repo, 'does-not-exist');
     }
 
+    public function testNoticeIdIsAStableHashOfKindRuleSubjectBaseChangeAndGuidance(): void
+    {
+        unlink($this->repo . '/src/Mailer.php');
+
+        $notice = (new ChangeImpactDetector())->detect($this->repo, 'HEAD')[0];
+        $baseSha = trim((string) shell_exec('git -C ' . escapeshellarg($this->repo) . ' rev-parse HEAD'));
+
+        self::assertSame(
+            substr(sha1(implode("\0", ['removed', 'Fx\Rules::Mailer', 'Fx\Mailer::send', $baseSha, '', 'Read docs/adr/mailer.md first.'])), 0, 20),
+            $notice->id,
+        );
+        self::assertSame('src/Mailer.php', $notice->sourcePath);
+    }
+
+    public function testAnnotatedTagResolvesToItsCommit(): void
+    {
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+        $this->git('tag', '-a', 'trusted', '-m', 'trusted base', 'HEAD');
+
+        $byTag = (new ChangeImpactDetector())->detect($this->repo, 'trusted');
+        $byHead = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+
+        self::assertCount(1, $byTag);
+        self::assertSame($byHead[0]->id, $byTag[0]->id);
+    }
+
+    public function testAddedAndNonPhpFilesAndUnprotectedChangesAreIgnored(): void
+    {
+        file_put_contents($this->repo . '/README.md', 'hello');
+        file_put_contents($this->repo . '/src/New.php', $this->mailer('return 1;'));
+        $this->git('add', '-A');
+        file_put_contents($this->repo . '/src/Mailer.php', str_replace('public function other(): void
+    {
+    }', 'public function other(): void
+    {
+        echo 1;
+    }', $this->mailer('return strtoupper($to);')));
+
+        self::assertSame([], (new ChangeImpactDetector())->detect($this->repo, 'HEAD'));
+    }
+
+    public function testClassLevelRuleNotifiesWhenAnyMethodChanges(): void
+    {
+        file_put_contents($this->repo . '/src/Mailer.php', str_replace("final class Mailer", "#[Rule(Rules::Mailer)]\nfinal class Mailer", $this->mailer('return strtoupper($to);')));
+        $this->git('add', '-A');
+        $this->git('commit', '-q', '-m', 'class level');
+        file_put_contents($this->repo . '/src/Mailer.php', str_replace('public function other(): void
+    {
+    }', 'public function other(): void
+    {
+        echo 1;
+    }', (string) file_get_contents($this->repo . '/src/Mailer.php')));
+
+        $subjects = array_map(static fn ($notice): string => $notice->subject, (new ChangeImpactDetector())->detect($this->repo, 'HEAD'));
+
+        self::assertSame(['Fx\Mailer'], $subjects);
+    }
+
+    public function testRenamedFileIsReportedAsRemovedFromItsBasePath(): void
+    {
+        $this->git('mv', 'src/Mailer.php', 'src/Moved.php');
+
+        $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+
+        self::assertCount(1, $notices);
+        self::assertSame('removed', $notices[0]->kind);
+        self::assertSame('src/Mailer.php', $notices[0]->sourcePath);
+    }
+
+    public function testUnresolvableRuleFallsBackToItsIdWithoutGuidance(): void
+    {
+        $this->git('rm', '-q', 'src/Rules.php');
+        $this->git('commit', '-q', '-m', 'drop rules');
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+
+        $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+
+        self::assertCount(1, $notices);
+        self::assertSame('Fx\Rules::Mailer', $notices[0]->statement);
+        self::assertNull($notices[0]->guidance);
+        self::assertSame([], $notices[0]->refs);
+        self::assertStringContainsString('No changeGuidance is defined', $notices[0]->toArray()['message']);
+        self::assertSame('Protected symbol modified: Fx\Rules::Mailer', $notices[0]->toArray()['title']);
+    }
+
+    public function testFormattingOnlyRuleDefinitionChangeProducesNoNotice(): void
+    {
+        file_put_contents($this->repo . '/src/Rules.php', str_replace("statement: 'Use", "// comment\n                statement:   'Use", $this->rules('Read docs/adr/mailer.md first.')));
+
+        self::assertSame([], (new ChangeImpactDetector())->detect($this->repo, 'HEAD'));
+    }
+
+    public function testRemovedRuleDefinitionAndRemovedRulesFileAreReported(): void
+    {
+        unlink($this->repo . '/src/Rules.php');
+
+        $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+
+        self::assertCount(1, $notices);
+        self::assertSame('rule-removed', $notices[0]->kind);
+        self::assertSame('Fx\Rules::Mailer', $notices[0]->subject);
+        self::assertSame('Read docs/adr/mailer.md first.', $notices[0]->guidance);
+        self::assertSame(['docs/adr/mailer.md'], $notices[0]->refs);
+        self::assertSame('Rule definition removed: Use the mailer abstraction.', $notices[0]->toArray()['title']);
+    }
+
+    public function testChangedGuidanceChangesTheNoticeIdentity(): void
+    {
+        $detector = new ChangeImpactDetector();
+        file_put_contents($this->repo . '/src/Rules.php', $this->rules('One.'));
+        $one = $detector->detect($this->repo, 'HEAD')[0];
+        file_put_contents($this->repo . '/src/Rules.php', $this->rules('Two.'));
+        $two = $detector->detect($this->repo, 'HEAD')[0];
+
+        self::assertNotSame($one->id, $two->id);
+        self::assertSame(['docs/adr/mailer.md'], $two->refs);
+        self::assertSame('Rule definition changed: Use the mailer abstraction.', $two->toArray()['title']);
+    }
+
+    public function testNoticesAreOrderedById(): void
+    {
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+        file_put_contents($this->repo . '/src/Rules.php', $this->rules('Changed.'));
+
+        $ids = array_map(static fn ($notice): string => $notice->id, (new ChangeImpactDetector())->detect($this->repo, 'HEAD'));
+        $sorted = $ids;
+        sort($sorted);
+
+        self::assertCount(2, $ids);
+        self::assertSame($sorted, $ids);
+    }
+
+    public function testRemovedFileInProposedRevisionIsReported(): void
+    {
+        $this->git('rm', '-q', 'src/Mailer.php');
+        $this->git('commit', '-q', '-m', 'remove');
+
+        self::assertSame(['removed'], array_map(static fn ($notice): string => $notice->kind, (new ChangeImpactDetector())->detect($this->repo, 'HEAD~1', 'HEAD')));
+    }
+
+    public function testNoticesJsonIsPrettyPrintedWithUnescapedSlashes(): void
+    {
+        $detector = new ChangeImpactDetector();
+
+        self::assertSame("{\n    \"notices\": []\n}\n", $detector->toNoticesJson([]));
+
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+        $json = $detector->toNoticesJson($detector->detect($this->repo, 'HEAD'));
+
+        self::assertStringContainsString('"docs/adr/mailer.md"', $json);
+        self::assertStringContainsString("\n        {\n            \"id\"", $json);
+        self::assertStringEndsWith("}\n", $json);
+    }
+
+    public function testUnknownBaseNamesTheFailingGitCommand(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('git rev-parse failed');
+
+        (new ChangeImpactDetector())->detect($this->repo, 'does-not-exist');
+    }
+
+    public function testGitErrorOutputIsPartOfTheFailure(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/git diff failed: .*(bad revision|unknown revision)/');
+
+        (new ChangeImpactDetector())->detect($this->repo, 'HEAD', 'no-such-head');
+    }
+
+    public function testUnreadableWorkingTreeFileFailsLoudly(): void
+    {
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            self::markTestSkipped('File permissions are not enforced for root.');
+        }
+
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+        chmod($this->repo . '/src/Mailer.php', 0000);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot read src/Mailer.php.');
+
+        try {
+            (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+        } finally {
+            chmod($this->repo . '/src/Mailer.php', 0644);
+        }
+    }
+
+    public function testRepositoryPathWithTrailingSlashWorks(): void
+    {
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+
+        self::assertCount(1, (new ChangeImpactDetector())->detect($this->repo . '/', 'HEAD'));
+    }
+
     private function git(string ...$arguments): void
     {
         exec(sprintf('git -C %s %s 2>&1', escapeshellarg($this->repo), implode(' ', array_map('escapeshellarg', $arguments))), $output, $code);

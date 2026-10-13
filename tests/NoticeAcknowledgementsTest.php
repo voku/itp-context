@@ -59,6 +59,93 @@ final class NoticeAcknowledgementsTest extends TestCase
         (new NoticeAcknowledgements($file))->consume([$this->notice('a')]);
     }
 
+    public function testStateIsStoredAsSortedIdListUnderRepositoryKey(): void
+    {
+        NoticeAcknowledgements::forRepository($this->stateDir . '/', __DIR__)->consume([$this->notice('b'), $this->notice('a')]);
+
+        $expected = $this->stateDir . '/itp-context/' . sha1((string) realpath(__DIR__)) . '.json';
+        self::assertFileExists($expected);
+        self::assertSame('{"seen":["a","b"]}', file_get_contents($expected));
+        self::assertSame([], glob($this->stateDir . '/itp-context/*.tmp'));
+    }
+
+    public function testUnresolvableRepositoryPathIsKeyedByItsGivenPath(): void
+    {
+        NoticeAcknowledgements::forRepository($this->stateDir, '/does/not/exist')->consume([$this->notice('a')]);
+
+        self::assertFileExists($this->stateDir . '/itp-context/' . sha1('/does/not/exist') . '.json');
+    }
+
+    public function testNumericIdsAreRemembered(): void
+    {
+        $acknowledgements = NoticeAcknowledgements::forRepository($this->stateDir, __DIR__);
+        $acknowledgements->consume([$this->notice('123')]);
+
+        self::assertSame([], $acknowledgements->consume([$this->notice('123')]));
+    }
+
+    public function testNothingIsWrittenWhenAllNoticesWereSeen(): void
+    {
+        $acknowledgements = NoticeAcknowledgements::forRepository($this->stateDir, __DIR__);
+        $acknowledgements->consume([$this->notice('a')]);
+        $file = (string) glob($this->stateDir . '/itp-context/*.json')[0];
+        file_put_contents($file, '{"seen":["a"],"marker":1}');
+
+        $acknowledgements->consume([$this->notice('a')]);
+
+        self::assertSame('{"seen":["a"],"marker":1}', file_get_contents($file));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function corruptContents(): array
+    {
+        return [
+            'not json' => ['not json'],
+            'scalar' => ['"x"'],
+            'null' => ['null'],
+            'no seen key' => ['{}'],
+            'seen is string' => ['{"seen":"x"}'],
+            'seen is object' => ['{"seen":{"a":"a"}}'],
+            'seen has non-string' => ['{"seen":[1]}'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('corruptContents')]
+    public function testCorruptStateVariantsFailLoudly(string $contents): void
+    {
+        mkdir($this->stateDir);
+        $file = $this->stateDir . '/state.json';
+        file_put_contents($file, $contents);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('is corrupt');
+
+        (new NoticeAcknowledgements($file))->consume([$this->notice('a')]);
+    }
+
+    public function testUnreadableDirectoryFailsLoudly(): void
+    {
+        mkdir($this->stateDir);
+        file_put_contents($this->stateDir . '/blocker', 'x');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot create acknowledgement directory');
+
+        (new NoticeAcknowledgements($this->stateDir . '/blocker/sub/state.json'))->consume([$this->notice('a')]);
+    }
+
+    public function testUnwritableTargetFailsLoudly(): void
+    {
+        mkdir($this->stateDir . '/state.json', 0777, true);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot write acknowledgement file');
+
+        (new NoticeAcknowledgements($this->stateDir . '/state.json'))->consume([$this->notice('a')]);
+    }
+
     private function notice(string $id): ChangeNotice
     {
         return new ChangeNotice($id, 'modified', 'R::A', 'S', 'src/S.php', 'Statement', null, []);

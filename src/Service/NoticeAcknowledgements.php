@@ -35,20 +35,17 @@ final class NoticeAcknowledgements
     public function consume(array $notices): array
     {
         $seen = $this->load();
-        $unseen = array_values(array_filter($notices, static fn (ChangeNotice $notice): bool => !isset($seen[$notice->id])));
+        $unseen = array_values(array_filter($notices, static fn (ChangeNotice $notice): bool => !in_array($notice->id, $seen, true)));
 
         if ($unseen !== []) {
-            foreach ($unseen as $notice) {
-                $seen[$notice->id] = true;
-            }
-            $this->save($seen);
+            $this->save([...$seen, ...array_map(static fn (ChangeNotice $notice): string => $notice->id, $unseen)]);
         }
 
         return $unseen;
     }
 
     /**
-     * @return array<string, true>
+     * @return list<string>
      */
     private function load(): array
     {
@@ -57,31 +54,27 @@ final class NoticeAcknowledgements
         }
 
         $decoded = json_decode((string) file_get_contents($this->file), true);
-        if (!is_array($decoded) || !isset($decoded['seen']) || !is_array($decoded['seen'])) {
+        $seen = is_array($decoded) ? ($decoded['seen'] ?? null) : null;
+        if (!is_array($seen) || !array_is_list($seen) || array_filter($seen, 'is_string') !== $seen) {
             throw new RuntimeException("Acknowledgement file {$this->file} is corrupt; delete it to reset.");
-        }
-
-        $seen = [];
-        foreach (array_keys($decoded['seen']) as $id) {
-            $seen[(string) $id] = true;
         }
 
         return $seen;
     }
 
     /**
-     * @param array<string, true> $seen
+     * @param list<string> $seen
      */
     private function save(array $seen): void
     {
         $dir = dirname($this->file);
-        if (!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
             throw new RuntimeException("Cannot create acknowledgement directory {$dir}.");
         }
 
-        ksort($seen);
-        $temporary = $this->file . '.' . getmypid() . '.tmp';
-        if (file_put_contents($temporary, json_encode(['seen' => $seen], JSON_THROW_ON_ERROR)) === false || !rename($temporary, $this->file)) {
+        sort($seen);
+        $temporary = $this->file . '.tmp';
+        if (@file_put_contents($temporary, json_encode(['seen' => $seen], JSON_THROW_ON_ERROR)) === false || !@rename($temporary, $this->file)) {
             throw new RuntimeException("Cannot write acknowledgement file {$this->file}.");
         }
     }

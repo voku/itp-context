@@ -51,4 +51,12 @@ final class RuleDefTest extends TestCase
 
         new RuleDef('Rule', changeGuidance: '  ');
     }
+
+    public function testStrictRuleRejectsBlankOwner(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('must have an explicitly assigned owner');
+
+        new RuleDef('Critical rule', Tier::Critical, owner: '   ', verifiedBy: [self::class]);
+    }
 }

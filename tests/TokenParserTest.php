@@ -232,4 +232,39 @@ PHP);
         self::assertSame($fingerprints($original), $fingerprints($reformatted));
         self::assertNotSame($fingerprints($original)['A\\B::c'], $fingerprints($changed)['A\\B::c']);
     }
+
+    public function testFingerprintsCoverExactlyOneDeclarationEach(): void
+    {
+        $parser = new TokenParser();
+        $code = "<?php\nnamespace A;\ninterface I { public function m(): void; public function n(): int; }\n"
+            . "abstract class C { abstract public function x(): void; public function y(string \$s): string { return \"\$s!\"; } public function z(): int { if (true) { return 1; } return 2; } }\n"
+            . "trait T { public function t(): void { echo 1; } }\n"
+            . "enum E { case A; public function e(): int { return 1; } }\n"
+            . "function f(string \$s): string { return \"{\$s}!\"; }\nfunction g(): int { return 1; }\n";
+        $variant = str_replace('return "{$s}!";', 'return "{$s}?";', $code);
+        $variantInterface = str_replace('public function n(): int;', 'public function n(): string;', $code);
+
+        $map = static fn (string $source): array => array_column(
+            array_map(static fn ($target): array => [$target->kind . ':' . $target->fqcn, $target->fingerprint], $parser->getRuleTargetsFromCode($source)),
+            1,
+            0,
+        );
+        $base = $map($code);
+        $changedBody = $map($variant);
+        $changedInterface = $map($variantInterface);
+
+        self::assertSame(
+            ['interface:A\I', 'method:A\I::m', 'method:A\I::n', 'class:A\C', 'method:A\C::x', 'method:A\C::y', 'method:A\C::z', 'trait:A\T', 'method:A\T::t', 'enum:A\E', 'method:A\E::e', 'function:A\f', 'function:A\g'],
+            array_keys($base),
+        );
+        self::assertCount(13, array_unique($base));
+
+        // only the edited method and its owner change; siblings and later declarations stay stable
+        $differing = array_keys(array_diff_assoc($changedBody, $base));
+        self::assertSame(['function:A\f'], $differing);
+
+        // an interface method ends at ';' and does not swallow the next method
+        self::assertSame(['interface:A\I', 'method:A\I::n'], array_keys(array_diff_assoc($changedInterface, $base)));
+        self::assertSame($base['method:A\I::m'], $changedInterface['method:A\I::m']);
+    }
 }
