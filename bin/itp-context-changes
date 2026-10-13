@@ -1,0 +1,40 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloadPath = $GLOBALS['_composer_autoload_path'] ?? dirname(__DIR__) . '/vendor/autoload.php';
+
+if (!is_string($autoloadPath) || !file_exists($autoloadPath)) {
+    fwrite(STDERR, "Autoload file not found.\n");
+    exit(1);
+}
+
+require $autoloadPath;
+
+$base = null;
+$head = null;
+$root = getcwd();
+
+foreach (array_slice($argv, 1) as $argument) {
+    if (str_starts_with($argument, '--base=')) {
+        $base = substr($argument, 7);
+    } elseif (str_starts_with($argument, '--head=')) {
+        $head = substr($argument, 7);
+    } elseif (str_starts_with($argument, '--root=')) {
+        $root = substr($argument, 7);
+    }
+}
+
+if ($base === null || $base === '' || !is_string($root)) {
+    fwrite(STDERR, "Usage: vendor/bin/itp-context-changes --base=<trusted-ref> [--head=<ref>] [--root=<repo-dir>]\n");
+    exit(1);
+}
+
+try {
+    $detector = new ItpContext\Service\ChangeImpactDetector();
+    echo $detector->toNoticesJson($detector->detect($root, $base, $head === '' ? null : $head));
+} catch (Throwable $throwable) {
+    fwrite(STDERR, $throwable->getMessage() . "\n");
+    exit(1);
+}

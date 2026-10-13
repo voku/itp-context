@@ -168,6 +168,16 @@ Example output:
 - **Refs:** docs/adr/i18n.md
 ```
 
+### Detect changes to protected code
+
+```bash
+vendor/bin/itp-context-changes --base=origin/main > architecture-notices.json
+```
+
+Compares the explicitly chosen, trusted `--base` revision with the working tree (or `--head=<ref>`) and prints advisory notices as JSON. Notices are emitted for modified or removed annotated symbols, removed `#[Rule]` annotations and changed rule definitions (including `changeGuidance`). Annotations and rule definitions come from the base revision, so a change cannot silently remove its own protection. Whitespace and comment changes are ignored. Notice ids are deterministic for a given base, rule, symbol and change. Rule definitions are read statically and need named arguments with string literals (`statement:`, `changeGuidance:`, `refs:`).
+
+The output is the `noticesFile` input of [`voku/phpstan-agent-format`](https://github.com/voku/phpstan-agent-format); neither package depends on the other.
+
 ### 5. Export agent-friendly context for a source tree
 
 ```php

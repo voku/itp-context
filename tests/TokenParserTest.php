@@ -215,4 +215,21 @@ PHP);
 
         return $path;
     }
+
+    public function testFingerprintIgnoresFormattingAndCommentsButNotCode(): void
+    {
+        $parser = new TokenParser();
+        $original = "<?php\nnamespace A;\nclass B {\n    public function c(): int { return 1; }\n}\n";
+        $reformatted = "<?php\nnamespace A;\nclass B\n{\n    // note\n    public function c(): int {\n        return  1;\n    }\n}\n";
+        $changed = "<?php\nnamespace A;\nclass B {\n    public function c(): int { return 2; }\n}\n";
+
+        $fingerprints = static fn (string $code): array => array_column(
+            array_map(static fn ($target): array => [$target->fqcn, $target->fingerprint], $parser->getRuleTargetsFromCode($code)),
+            1,
+            0,
+        );
+
+        self::assertSame($fingerprints($original), $fingerprints($reformatted));
+        self::assertNotSame($fingerprints($original)['A\\B::c'], $fingerprints($changed)['A\\B::c']);
+    }
 }
