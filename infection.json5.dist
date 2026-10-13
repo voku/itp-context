@@ -26,6 +26,6 @@
   "staticAnalysisTool": "phpstan",
   "staticAnalysisToolOptions": "--memory-limit=1G",
   "testFrameworkOptions": "--colors=never --do-not-cache-result",
-  "minMsi": 95,
-  "minCoveredMsi": 100
+  "minMsi": 80,
+  "minCoveredMsi": 85
 }

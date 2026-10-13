@@ -79,6 +79,8 @@ PHP);
         self::assertSame(['render'], $documents[1]->annotatedMethods);
         self::assertStringContainsString('**Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.', $documents[1]->body);
         self::assertStringContainsString('**Why:** Locale-aware rendering avoids user-facing regressions once the UI contains translated labels and formatted values.', $documents[1]->body);
+        self::assertStringContainsString('**When changing:** Keep rendering behind the view abstraction. If you must change how this symbol renders, read docs/adr/view-abstraction.md first and update the ADR together with the code.', $documents[1]->body);
+        self::assertStringNotContainsString('**When changing:** Read', $documents[1]->body);
         self::assertStringContainsString('## Method: `render`', $documents[1]->body);
     }
 

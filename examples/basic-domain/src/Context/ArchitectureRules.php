@@ -23,6 +23,7 @@ enum ArchitectureRules implements RuleIdentifier
                 owner: 'Team-Architecture',
                 rationale: 'A dedicated view layer keeps rendering concerns isolated from domain and controller code.',
                 refs: ['docs/adr/view-abstraction.md', 'docs/ui/rendering.md'],
+                changeGuidance: 'Keep rendering behind the view abstraction. If you must change how this symbol renders, read docs/adr/view-abstraction.md first and update the ADR together with the code.',
             ),
             self::I18n => new RuleDef(
                 statement: 'Use locale-aware formatting and translated UI labels.',

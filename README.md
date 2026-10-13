@@ -93,6 +93,8 @@ enum ArchitectureRules implements RuleIdentifier
 
 Use `refs` for the context you want nearby: ADRs, docs, design notes, diagrams, tickets or related code.
 
+Optionally set `changeGuidance` on a rule to tell a reader what to do before changing the protected symbol (for example which ADR to read). It is advisory text, shown as `**When changing:**`, and never an enforcement mechanism.
+
 ### 2. Annotate your code
 
 Keep annotations selective: tag the classes or methods where architecture context changes decisions, not every file.
@@ -155,6 +157,7 @@ Example output:
 - **Owner:** Team-Architecture
 - **Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.
 - **Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md
+- **When changing:** Keep rendering behind the view abstraction. If you must change how this symbol renders, read docs/adr/view-abstraction.md first and update the ADR together with the code.
 
 ## Method: `render`
 ### [INFO] Use locale-aware formatting and translated UI labels.
@@ -164,6 +167,18 @@ Example output:
 - **Proof:** Acme\Tests\I18nTest
 - **Refs:** docs/adr/i18n.md
 ```
+
+### Detect changes to protected code
+
+```bash
+vendor/bin/itp-context-changes --base=origin/main > architecture-notices.json
+```
+
+Compares the explicitly chosen, trusted `--base` revision with the working tree (or `--head=<ref>`) and prints advisory notices as JSON. Notices are emitted for modified or removed annotated symbols, removed `#[Rule]` annotations and changed rule definitions (including `changeGuidance`). Annotations and rule definitions come from the base revision, so a change cannot silently remove its own protection. Whitespace and comment changes are ignored. Notice ids are deterministic for a given base, rule, symbol and change. Rule definitions are read statically and need named arguments with string literals (`statement:`, `changeGuidance:`, `refs:`).
+
+Locally, add `--once` to show each notice only once: ids of already shown notices are stored per repository under `$XDG_STATE_HOME` (or `~/.local/state`, override with `--state-dir=`), outside the repository and outside PHPStan's cache. A changed implementation or changed guidance yields a new id and is shown again. When the `CI` environment variable is set, `--once` is ignored and every notice is reported on every run.
+
+The output is the `noticesFile` input of [`voku/phpstan-agent-format`](https://github.com/voku/phpstan-agent-format); neither package depends on the other.
 
 ### 5. Export agent-friendly context for a source tree
 
