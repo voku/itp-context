@@ -291,17 +291,20 @@ final class ChangeImpactDetectorTest extends TestCase
     public function testUnknownBaseNamesTheFailingGitCommand(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('git rev-parse failed');
+        $this->expectExceptionMessage('git rev-parse failed: ref or path not found');
 
         (new ChangeImpactDetector())->detect($this->repo, 'does-not-exist');
     }
 
-    public function testGitErrorOutputIsPartOfTheFailure(): void
+    public function testGitErrorOutputIsPartOfTheFailureWithoutTrailingWhitespace(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/git diff failed: .*(bad revision|unknown revision)/');
-
-        (new ChangeImpactDetector())->detect($this->repo, 'HEAD', 'no-such-head');
+        try {
+            (new ChangeImpactDetector())->detect($this->repo, 'HEAD', 'no-such-head');
+            self::fail('Expected a RuntimeException.');
+        } catch (RuntimeException $exception) {
+            self::assertMatchesRegularExpression('/^git diff failed: .*(bad revision|unknown revision)/', $exception->getMessage());
+            self::assertSame(trim($exception->getMessage()), $exception->getMessage());
+        }
     }
 
     public function testUnreadableWorkingTreeFileFailsLoudly(): void

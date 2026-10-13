@@ -249,7 +249,9 @@ final class ChangeImpactDetector
         $exitCode = proc_close($process);
 
         if (!in_array($exitCode, $okExitCodes, true)) {
-            throw new RuntimeException(sprintf('git %s failed: %s', $arguments[0], trim($stderr) !== '' ? trim($stderr) : 'ref or path not found'));
+            $reason = trim($stderr);
+
+            throw new RuntimeException(sprintf('git %s failed: %s', $arguments[0], $reason !== '' ? $reason : 'ref or path not found'));
         }
 
         return $stdout;
