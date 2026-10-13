@@ -254,6 +254,9 @@ final class ContextReader implements ContextDocumentReader
                 if ($definition->refs !== []) {
                     $output .= '- **Refs:** ' . implode(', ', $definition->refs) . "\n";
                 }
+                if ($definition->changeGuidance !== null) {
+                    $output .= "- **When changing:** {$definition->changeGuidance}\n";
+                }
 
                 $output .= "\n";
             } catch (\Throwable $throwable) {

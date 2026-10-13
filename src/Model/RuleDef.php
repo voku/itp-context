@@ -20,9 +20,14 @@ final readonly class RuleDef
         public ?string $owner = null,
         public array $verifiedBy = [],
         public array $refs = [],
+        public ?string $changeGuidance = null,
     ) {
         if (trim($statement) === '') {
             throw new LogicException('Rule statement cannot be empty.');
+        }
+
+        if ($changeGuidance !== null && trim($changeGuidance) === '') {
+            throw new LogicException("Rule '{$statement}' has empty changeGuidance; use null to omit it.");
         }
 
         if ($tier->requiresProof() && $verifiedBy === []) {

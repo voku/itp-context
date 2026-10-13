@@ -54,6 +54,7 @@ final class ContextExporterTest extends TestCase
         self::assertStringContainsString('ArchitectureRules::ViewAbstraction', $symbolContent);
         self::assertStringContainsString('ArchitectureRules::I18n', $symbolContent);
         self::assertStringContainsString('**Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.', $symbolContent);
+        self::assertStringContainsString('**When changing:** Keep rendering behind the view abstraction. If you must change how this symbol renders, read docs/adr/view-abstraction.md first and update the ADR together with the code.', $symbolContent);
         self::assertStringContainsString('**Proof:** ItpContextExample\\Tests\\I18nTest', $symbolContent);
         self::assertStringContainsString('**Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md', $symbolContent);
         self::assertStringContainsString('**Refs:** docs/adr/i18n.md', $symbolContent);

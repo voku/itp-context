@@ -93,6 +93,8 @@ enum ArchitectureRules implements RuleIdentifier
 
 Use `refs` for the context you want nearby: ADRs, docs, design notes, diagrams, tickets or related code.
 
+Optionally set `changeGuidance` on a rule to tell a reader what to do before changing the protected symbol (for example which ADR to read). It is advisory text, shown as `**When changing:**`, and never an enforcement mechanism.
+
 ### 2. Annotate your code
 
 Keep annotations selective: tag the classes or methods where architecture context changes decisions, not every file.
@@ -155,6 +157,7 @@ Example output:
 - **Owner:** Team-Architecture
 - **Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.
 - **Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md
+- **When changing:** Keep rendering behind the view abstraction. If you must change how this symbol renders, read docs/adr/view-abstraction.md first and update the ADR together with the code.
 
 ## Method: `render`
 ### [INFO] Use locale-aware formatting and translated UI labels.

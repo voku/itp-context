@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- added optional trailing `RuleDef::$changeGuidance` (what to read/do before changing protected code); shown as `**When changing:**` in context output and exports. Existing rule definitions are unchanged; empty guidance is rejected
+
 ## 0.3.0
 
 - moved rule definitions onto `RuleIdentifier` enums via `getDefinition()` and removed sibling catalog files from the example, generator and resolver flow
