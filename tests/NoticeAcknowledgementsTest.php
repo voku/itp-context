@@ -88,7 +88,7 @@ final class NoticeAcknowledgementsTest extends TestCase
     {
         $acknowledgements = NoticeAcknowledgements::forRepository($this->stateDir, __DIR__);
         $acknowledgements->consume([$this->notice('a')]);
-        $file = (string) glob($this->stateDir . '/itp-context/*.json')[0];
+        $file = $this->stateDir . '/itp-context/' . sha1((string) realpath(__DIR__)) . '.json';
         file_put_contents($file, '{"seen":["a"],"marker":1}');
 
         $acknowledgements->consume([$this->notice('a')]);
