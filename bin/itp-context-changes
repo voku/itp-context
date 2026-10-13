@@ -15,25 +15,40 @@ require $autoloadPath;
 $base = null;
 $head = null;
 $root = getcwd();
+$once = false;
+$stateDir = null;
 
 foreach (array_slice($argv, 1) as $argument) {
     if (str_starts_with($argument, '--base=')) {
         $base = substr($argument, 7);
     } elseif (str_starts_with($argument, '--head=')) {
         $head = substr($argument, 7);
+    } elseif ($argument === '--once') {
+        $once = true;
+    } elseif (str_starts_with($argument, '--state-dir=')) {
+        $stateDir = substr($argument, 12);
     } elseif (str_starts_with($argument, '--root=')) {
         $root = substr($argument, 7);
     }
 }
 
 if ($base === null || $base === '' || !is_string($root)) {
-    fwrite(STDERR, "Usage: vendor/bin/itp-context-changes --base=<trusted-ref> [--head=<ref>] [--root=<repo-dir>]\n");
+    fwrite(STDERR, "Usage: vendor/bin/itp-context-changes --base=<trusted-ref> [--head=<ref>] [--root=<repo-dir>] [--once [--state-dir=<dir>]]\n");
     exit(1);
 }
 
 try {
     $detector = new ItpContext\Service\ChangeImpactDetector();
-    echo $detector->toNoticesJson($detector->detect($root, $base, $head === '' ? null : $head));
+    $notices = $detector->detect($root, $base, $head === '' ? null : $head);
+
+    if ($once && (string) getenv('CI') !== '') {
+        fwrite(STDERR, "CI is set: ignoring --once, reporting every notice.\n");
+    } elseif ($once) {
+        $stateDir ??= (string) getenv('XDG_STATE_HOME') !== '' ? (string) getenv('XDG_STATE_HOME') : (string) getenv('HOME') . '/.local/state';
+        $notices = ItpContext\Service\NoticeAcknowledgements::forRepository($stateDir, $root)->consume($notices);
+    }
+
+    echo $detector->toNoticesJson($notices);
 } catch (Throwable $throwable) {
     fwrite(STDERR, $throwable->getMessage() . "\n");
     exit(1);
