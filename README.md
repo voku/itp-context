@@ -158,7 +158,7 @@ Example output:
 - **Owner:** Team-Architecture
 - **Why:** A dedicated view layer keeps rendering concerns isolated from domain and controller code.
 - **Refs:** docs/adr/view-abstraction.md, docs/ui/rendering.md
-- **When changing:** Keep rendering behind the view abstraction. If you must change how this symbol renders, read docs/adr/view-abstraction.md first and update the ADR together with the code.
+- **When changing:** Read docs/adr/view-abstraction.md before changing rendering boundaries.
 
 ## Method: `render`
 ### [INFO] Use locale-aware formatting and translated UI labels.
