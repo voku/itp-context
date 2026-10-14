@@ -203,7 +203,7 @@ vendor/bin/itp-context-changes --base=origin/main --once > .architecture-notices
 vendor/bin/phpstan analyse --error-format=agent
 ```
 
-The first command creates the temporary JSON input. The second emits both ordinary PHPStan findings and advisory change notices in one report. Notices do **not** count as PHPStan errors or change PHPStan's exit code. In CI, omit `--once` and optionally pass `--head=<commit>` to compare two fixed revisions. Fetch the trusted baseline explicitly, and do not commit `.architecture-notices.json`. See the formatter's [advisory notices documentation](https://github.com/voku/phpstan-agent-format#Advisory-notices) for redaction and output formats.
+The first command creates the temporary JSON input. The second emits both ordinary PHPStan findings and advisory change notices in one report. Notices do **not** count as PHPStan errors or change PHPStan's exit code. In CI, omit `--once` and optionally pass `--head=<commit>` to compare two fixed revisions. Fetch the trusted baseline explicitly, and do not commit `.architecture-notices.json`. See the formatter's [advisory notices documentation](https://github.com/voku/phpstan-agent-format#advisory-notices) for redaction and output formats.
 
 **Limitation:** The formatter reads an existing notices file. It does not run `itp-context-changes` automatically; `--error-format=agent` must be selected for this combined report.
 
