@@ -169,43 +169,44 @@ Example output:
 - **Refs:** docs/adr/i18n.md
 ```
 
-### Detect changes to protected code
+### Resolve the rules that apply to a set of files
 
-```bash
-vendor/bin/itp-context-changes --base=origin/main > architecture-notices.json
+```php
+<?php
+
+declare(strict_types=1);
+
+use ItpContext\Service\ApplicableRuleResolver;
+
+$rules = (new ApplicableRuleResolver())->resolveFiles([
+    __DIR__ . '/src/Database.php',
+    __DIR__ . '/src/UserRepository.php',
+]);
+
+foreach ($rules as $rule) {
+    echo $rule->ruleId, ': ', $rule->statement, "\n";
+    echo '  applies to: ', implode(', ', $rule->subjects), "\n";
+}
 ```
 
-Compares the explicitly chosen, trusted `--base` revision with the working tree (or `--head=<ref>`) and prints advisory notices as JSON. Notices are emitted for modified or removed annotated symbols, removed `#[Rule]` annotations and changed rule definitions (including `changeGuidance`). Annotations and rule definitions come from the base revision, so a change cannot silently remove its own protection. Whitespace and comment changes are ignored. Notice ids are deterministic for a given base, rule, symbol and change. Rule definitions are read statically and need named arguments with string literals (`statement:`, `changeGuidance:`, `refs:`).
+`ApplicableRuleResolver` is stateless: it reads the `#[Rule]` attributes of the given files with the `TokenParser`, resolves each `RuleIdentifier` case to its `RuleDef` and returns every rule **once** (sorted by rule id) as an `ApplicableRule` with `ruleId`, `statement`, `changeGuidance`, `refs` and the annotated `subjects` (`Class`, `Class::method` or function names). Files without annotations contribute nothing. A rule id that cannot be resolved to an enum case (for example because the enum is not autoloadable) throws a `RuntimeException`.
 
-Locally, add `--once` to show each notice only once: ids of already shown notices are stored per repository under `$XDG_STATE_HOME` (or `~/.local/state`, override with `--state-dir=`), outside the repository and outside PHPStan's cache. A changed implementation or changed guidance yields a new id and is shown again. When the `CI` environment variable is set, `--once` is ignored and every notice is reported on every run.
+#### Show the applicable rules in the PHPStan agent report
 
-The output is the `noticesFile` input of [`voku/phpstan-agent-format`](https://github.com/voku/phpstan-agent-format); neither package depends on the other.
-
-#### Show architecture notices in the PHPStan agent report
-
-Install [`voku/phpstan-agent-format`](https://github.com/voku/phpstan-agent-format) alongside this package in your host project and enable its existing formatter:
+Install [`voku/phpstan-agent-format`](https://github.com/voku/phpstan-agent-format) next to this package and enable the integration:
 
 ```neon
-# phpstan.neon, in addition to the project's existing PHPStan config
 includes:
     - vendor/voku/phpstan-agent-format/extension.neon
 
 parameters:
+    errorFormat: agent
+
     agentFormat:
-        noticesFile: .architecture-notices.json
+        itpContext: true
 ```
 
-Then run both tools from the **host project's** root:
-
-```bash
-# Ensure the chosen baseline ref exists and is trusted.
-vendor/bin/itp-context-changes --base=origin/main --once > .architecture-notices.json
-vendor/bin/phpstan analyse --error-format=agent
-```
-
-The first command creates the temporary JSON input. The second emits both ordinary PHPStan findings and advisory change notices in one report. Notices do **not** count as PHPStan errors or change PHPStan's exit code. In CI, omit `--once` and optionally pass `--head=<commit>` to compare two fixed revisions. Fetch the trusted baseline explicitly, and do not commit `.architecture-notices.json`. See the formatter's [advisory notices documentation](https://github.com/voku/phpstan-agent-format#advisory-notices) for redaction and output formats.
-
-**Limitation:** The formatter reads an existing notices file. It does not run `itp-context-changes` automatically; `--error-format=agent` must be selected for this combined report.
+`vendor/bin/phpstan analyse` then appends one advisory `architecture[<rule id>]` notice per rule that applies to the files PHPStan analysed in this run: `phpstan analyse src/Database.php` only reports the rules of that file, `phpstan analyse` reports every rule used in the project. No Git, no diff and no state file are involved, and notices never change PHPStan's exit code. See the formatter's documentation for output formats and redaction.
 
 ### 5. Export agent-friendly context for a source tree
 
@@ -335,14 +336,6 @@ The export contains:
 - `index.md` with an overview of all exported symbols
 - one markdown file per annotated PHP symbol under `php/`
 - compact frontmatter fields for `id`, `title`, `source_path`, `kind`, `rule_ids`, `owners`, `refs`, `verified_by`, `annotated_methods` and `rule_count`
-
-### `itp-context-changes`
-
-```shell
-vendor/bin/itp-context-changes --base=origin/main --once > .architecture-notices.json
-```
-
-Generates advisory JSON notices for changes to annotated symbols and rule definitions relative to an explicitly chosen Git baseline. Run it before the optional PHPStan agent formatter. The `--once` deduplication is local-only; CI always reports the notices deterministically.
 
 ### `itp-context-query`
 

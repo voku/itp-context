@@ -48,7 +48,6 @@
     "bin/itp-context-generate",
     "bin/itp-context-export",
     "bin/itp-context-query",
-    "bin/itp-context-changes"
   ],
   "scripts": {
     "phpstan": "phpstan analyse --configuration=phpstan.neon.dist",
