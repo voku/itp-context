@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ItpContext\Tests;
 
+use ItpContext\Model\ChangeNotice;
 use ItpContext\Service\ChangeImpactDetector;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -362,11 +363,13 @@ final class ChangeImpactDetectorTest extends TestCase
         file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
 
         $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+        $modified = array_values(array_filter($notices, static fn (ChangeNotice $notice): bool => $notice->kind === 'modified'));
 
-        self::assertCount(1, $notices);
-        self::assertSame('Use the mailer abstraction.', $notices[0]->statement);
-        self::assertSame('Read docs/adr/mailer.md first.', $notices[0]->guidance);
-        self::assertSame(['docs/adr/mailer.md'], $notices[0]->refs);
+        self::assertCount(2, $notices); // The rule definition itself also changed.
+        self::assertCount(1, $modified);
+        self::assertSame('Use the mailer abstraction.', $modified[0]->statement);
+        self::assertSame('Read docs/adr/mailer.md first.', $modified[0]->guidance);
+        self::assertSame(['docs/adr/mailer.md'], $modified[0]->refs);
     }
 
     public function testFullyQualifiedRuleDefConstructorRetainsGuidance(): void
@@ -380,10 +383,12 @@ final class ChangeImpactDetectorTest extends TestCase
         file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
 
         $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+        $modified = array_values(array_filter($notices, static fn (ChangeNotice $notice): bool => $notice->kind === 'modified'));
 
-        self::assertCount(1, $notices);
-        self::assertSame('Use the mailer abstraction.', $notices[0]->statement);
-        self::assertSame('Read docs/adr/mailer.md first.', $notices[0]->guidance);
+        self::assertCount(2, $notices); // The rule definition itself also changed.
+        self::assertCount(1, $modified);
+        self::assertSame('Use the mailer abstraction.', $modified[0]->statement);
+        self::assertSame('Read docs/adr/mailer.md first.', $modified[0]->guidance);
     }
 
     public function testEarlierUnrelatedMatchDoesNotShadowDefinition(): void
