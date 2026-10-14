@@ -333,6 +333,24 @@ final class ChangeImpactDetectorTest extends TestCase
         self::assertCount(1, (new ChangeImpactDetector())->detect($this->repo . '/', 'HEAD'));
     }
 
+    public function testLaterMatchArmDoesNotOverwriteRuleDefinition(): void
+    {
+        $rules = str_replace(
+            "    }\n}\n",
+            "    }\n\n    public function label(): string\n    {\n        return match (\$this) {\n            self::Mailer => 'Mailer',\n        };\n    }\n}\n",
+            $this->rules('Read docs/adr/mailer.md first.'),
+        );
+        file_put_contents($this->repo . '/src/Rules.php', $rules);
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+
+        $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+
+        self::assertCount(1, $notices);
+        self::assertSame('Use the mailer abstraction.', $notices[0]->statement);
+        self::assertSame('Read docs/adr/mailer.md first.', $notices[0]->guidance);
+        self::assertSame(['docs/adr/mailer.md'], $notices[0]->refs);
+    }
+
     private function git(string ...$arguments): void
     {
         exec(sprintf('git -C %s %s 2>&1', escapeshellarg($this->repo), implode(' ', array_map('escapeshellarg', $arguments))), $output, $code);
