@@ -9,7 +9,6 @@ final readonly class RuleTarget
     /**
      * @param 'class'|'enum'|'function'|'interface'|'method'|'trait' $kind
      * @param list<string> $ruleIds
-     * @param string $fingerprint hash of the whitespace- and comment-insensitive declaration tokens
      */
     public function __construct(
         public string $kind,
@@ -17,7 +16,6 @@ final readonly class RuleTarget
         public string $fqcn,
         public ?string $ownerFqcn = null,
         public array $ruleIds = [],
-        public string $fingerprint = '',
     ) {
     }
 

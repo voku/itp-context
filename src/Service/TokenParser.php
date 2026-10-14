@@ -35,14 +35,6 @@ final class TokenParser
     }
 
     /**
-     * @return list<RuleTarget>
-     */
-    public function getRuleTargetsFromCode(string $code): array
-    {
-        return $this->scanCode($code)['targets'];
-    }
-
-    /**
      * @return array{symbols:list<ParsedSymbol>, targets:list<RuleTarget>}
      */
     private function scanFile(string $filePath): array
@@ -161,7 +153,6 @@ final class TokenParser
                     name: $name,
                     fqcn: $fqcn,
                     ruleIds: $this->uniqueSorted($pendingRuleIds),
-                    fingerprint: $this->fingerprint($tokens, $index),
                 );
                 $pendingClass = [
                     'fqcn' => $fqcn,
@@ -185,7 +176,6 @@ final class TokenParser
                         fqcn: $currentClass['fqcn'] . '::' . $name,
                         ownerFqcn: $currentClass['fqcn'],
                         ruleIds: $this->uniqueSorted($pendingRuleIds),
-                        fingerprint: $this->fingerprint($tokens, $index),
                     );
                     $pendingRuleIds = [];
                     continue;
@@ -198,7 +188,6 @@ final class TokenParser
                     name: $name,
                     fqcn: $fqcn,
                     ruleIds: $this->uniqueSorted($pendingRuleIds),
-                    fingerprint: $this->fingerprint($tokens, $index),
                 );
                 $pendingRuleIds = [];
                 continue;
@@ -213,51 +202,6 @@ final class TokenParser
             'symbols' => $symbols,
             'targets' => $targets,
         ];
-    }
-
-    /**
-     * Hashes the declaration (header and body) without whitespace and comments,
-     * so formatting-only edits keep the fingerprint stable.
-     *
-     * @param array<int, array{0:int,1:string,2?:int}|string> $tokens
-     */
-    private function fingerprint(array $tokens, int $start): string
-    {
-        $normalized = [];
-        $depth = 0;
-        $count = count($tokens);
-
-        for ($cursor = $start; $cursor < $count; $cursor++) {
-            $token = $tokens[$cursor];
-
-            if (is_array($token)) {
-                if (in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
-                    continue;
-                }
-
-                if ($token[0] === T_CURLY_OPEN || $token[0] === T_DOLLAR_OPEN_CURLY_BRACES) {
-                    $depth++;
-                }
-
-                $normalized[] = $token[1];
-                continue;
-            }
-
-            $normalized[] = $token;
-
-            if ($token === '{') {
-                $depth++;
-            } elseif ($token === '}') {
-                $depth--;
-                if ($depth <= 0) {
-                    break;
-                }
-            } elseif ($token === ';' && $depth === 0) {
-                break;
-            }
-        }
-
-        return sha1(implode("\x1f", $normalized));
     }
 
     /**

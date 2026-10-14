@@ -2,9 +2,7 @@
 
 ## Unreleased
 
-- added `ChangeImpactDetector` and `bin/itp-context-changes --base=<trusted-ref>`: compares a trusted Git base with the working tree (or `--head=<ref>`) and emits advisory notices (JSON in the `noticesFile` shape of `voku/phpstan-agent-format`) for modified or removed annotated symbols, removed `#[Rule]` annotations and changed rule definitions. Annotations and definitions are read from the base; formatting-only edits are ignored
-- `itp-context-changes --once` stores shown notice ids outside the repository (`NoticeAcknowledgements`); ignored when `CI` is set
-- `RuleTarget::$fingerprint` (trailing, optional) and `TokenParser::getRuleTargetsFromCode()`
+- added stateless `ApplicableRuleResolver` and `ApplicableRule`: resolves the rules applying to a list of PHP files once per rule id (statement, `changeGuidance`, refs, annotated subjects); consumed by `voku/phpstan-agent-format` via `agentFormat.itpContext`
 - added optional trailing `RuleDef::$changeGuidance` (what to read/do before changing protected code); shown as `**When changing:**` in context output and exports. Existing rule definitions are unchanged; empty guidance is rejected
 
 ## 0.3.0
