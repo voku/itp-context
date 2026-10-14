@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
 
 - added stateless `ApplicableRuleResolver` and `ApplicableRule`: resolves the rules applying to a list of PHP files once per rule id (statement, `changeGuidance`, refs, annotated subjects); consumed by `voku/phpstan-agent-format` via `agentFormat.itpContext`
 - added optional trailing `RuleDef::$changeGuidance` (what to read/do before changing protected code); shown as `**When changing:**` in context output and exports. Existing rule definitions are unchanged; empty guidance is rejected
