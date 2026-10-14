@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ItpContext\Tests;
 
+use ItpContext\Model\ChangeNotice;
 use ItpContext\Service\ChangeImpactDetector;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -331,6 +332,80 @@ final class ChangeImpactDetectorTest extends TestCase
         file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
 
         self::assertCount(1, (new ChangeImpactDetector())->detect($this->repo . '/', 'HEAD'));
+    }
+
+    public function testLaterMatchArmDoesNotOverwriteRuleDefinition(): void
+    {
+        $rules = str_replace(
+            "    }\n}\n",
+            "    }\n\n    public function label(): string\n    {\n        return match (\$this) {\n            self::Mailer => 'Mailer',\n        };\n    }\n}\n",
+            $this->rules('Read docs/adr/mailer.md first.'),
+        );
+        file_put_contents($this->repo . '/src/Rules.php', $rules);
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+
+        $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+
+        self::assertCount(1, $notices);
+        self::assertSame('Use the mailer abstraction.', $notices[0]->statement);
+        self::assertSame('Read docs/adr/mailer.md first.', $notices[0]->guidance);
+        self::assertSame(['docs/adr/mailer.md'], $notices[0]->refs);
+    }
+
+    public function testAliasedRuleDefConstructorRetainsGuidance(): void
+    {
+        $rules = str_replace(
+            ['use ItpContext\Model\RuleDef;', 'getDefinition(): RuleDef', 'new RuleDef('],
+            ['use ItpContext\Model\RuleDef as Definition;', 'getDefinition(): Definition', 'new Definition('],
+            $this->rules('Read docs/adr/mailer.md first.'),
+        );
+        file_put_contents($this->repo . '/src/Rules.php', $rules);
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+
+        $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+        $modified = array_values(array_filter($notices, static fn (ChangeNotice $notice): bool => $notice->kind === 'modified'));
+
+        self::assertCount(2, $notices); // The rule definition itself also changed.
+        self::assertCount(1, $modified);
+        self::assertSame('Use the mailer abstraction.', $modified[0]->statement);
+        self::assertSame('Read docs/adr/mailer.md first.', $modified[0]->guidance);
+        self::assertSame(['docs/adr/mailer.md'], $modified[0]->refs);
+    }
+
+    public function testFullyQualifiedRuleDefConstructorRetainsGuidance(): void
+    {
+        $rules = str_replace(
+            ['new RuleDef(', 'getDefinition(): RuleDef'],
+            ['new \ItpContext\Model\RuleDef(', 'getDefinition(): \ItpContext\Model\RuleDef'],
+            $this->rules('Read docs/adr/mailer.md first.'),
+        );
+        file_put_contents($this->repo . '/src/Rules.php', $rules);
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+
+        $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+        $modified = array_values(array_filter($notices, static fn (ChangeNotice $notice): bool => $notice->kind === 'modified'));
+
+        self::assertCount(2, $notices); // The rule definition itself also changed.
+        self::assertCount(1, $modified);
+        self::assertSame('Use the mailer abstraction.', $modified[0]->statement);
+        self::assertSame('Read docs/adr/mailer.md first.', $modified[0]->guidance);
+    }
+
+    public function testEarlierUnrelatedMatchDoesNotShadowDefinition(): void
+    {
+        $rules = str_replace(
+            '    public function getDefinition(): RuleDef',
+            "    public function label(): string\n    {\n        return match (\$this) {\n            self::Mailer => 'Mailer',\n        };\n    }\n\n    public function getDefinition(): RuleDef",
+            $this->rules('Read docs/adr/mailer.md first.'),
+        );
+        file_put_contents($this->repo . '/src/Rules.php', $rules);
+        file_put_contents($this->repo . '/src/Mailer.php', $this->mailer('return strtolower($to);'));
+
+        $notices = (new ChangeImpactDetector())->detect($this->repo, 'HEAD');
+
+        self::assertCount(1, $notices);
+        self::assertSame('Use the mailer abstraction.', $notices[0]->statement);
+        self::assertSame('Read docs/adr/mailer.md first.', $notices[0]->guidance);
     }
 
     private function git(string ...$arguments): void

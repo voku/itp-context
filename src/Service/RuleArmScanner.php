@@ -44,9 +44,11 @@ final class RuleArmScanner
             static fn (array|string $token): bool => !is_array($token) || !in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true),
         ));
         $count = count($tokens);
+        // Preserve standalone enum scans without a getDefinition() method.
+        [$start, $end] = $this->definitionBody($tokens) ?? [0, $count];
         $arms = [];
 
-        for ($index = 0; $index + 4 < $count; $index++) {
+        for ($index = $start; $index + 4 < $end; $index++) {
             if (
                 !$this->isText($tokens[$index], ['self', 'static'])
                 || !$this->isType($tokens[$index + 1], T_DOUBLE_COLON)
@@ -59,6 +61,10 @@ final class RuleArmScanner
             $case = $this->text($tokens[$index + 2]);
             $armTokens = $this->collectArm($tokens, $index + 4);
             $ruleId = $enumFqcn . '::' . $case;
+
+            if (isset($arms[$ruleId])) {
+                continue;
+            }
 
             $arms[$ruleId] = new RuleArm(
                 ruleId: $ruleId,
@@ -99,6 +105,64 @@ final class RuleArmScanner
         }
 
         return $arm;
+    }
+
+    /**
+     * Only match arms inside the enum's authoritative getDefinition() method
+     * belong to RuleDef. This also supports aliased and fully qualified constructors.
+     *
+     * @param list<array{0:int,1:string,2?:int}|string> $tokens
+     * @return array{int, int}|null first token after opening brace, closing brace index
+     */
+    private function definitionBody(array $tokens): ?array
+    {
+        $count = count($tokens);
+
+        for ($index = 0; $index < $count; $index++) {
+            if (!$this->isType($tokens[$index], T_FUNCTION)) {
+                continue;
+            }
+
+            $namePosition = $index + 1;
+            if (($tokens[$namePosition] ?? null) === '&') {
+                $namePosition++;
+            }
+
+            if (
+                !isset($tokens[$namePosition])
+                || !$this->isType($tokens[$namePosition], T_STRING)
+                || $this->text($tokens[$namePosition]) !== 'getDefinition'
+            ) {
+                continue;
+            }
+
+            for ($open = $namePosition + 1; $open < $count; $open++) {
+                if ($tokens[$open] === ';') {
+                    return null;
+                }
+
+                if ($tokens[$open] !== '{') {
+                    continue;
+                }
+
+                $depth = 1;
+                for ($close = $open + 1; $close < $count; $close++) {
+                    $token = $tokens[$close];
+                    if ($token === '{' || (is_array($token) && in_array($token[0], [T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES], true))) {
+                        $depth++;
+                    } elseif ($token === '}') {
+                        $depth--;
+                        if ($depth === 0) {
+                            return [$open + 1, $close];
+                        }
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        return null;
     }
 
     /**
