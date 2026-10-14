@@ -60,6 +60,10 @@ final class RuleArmScanner
             $armTokens = $this->collectArm($tokens, $index + 4);
             $ruleId = $enumFqcn . '::' . $case;
 
+            if (isset($arms[$ruleId]) || !$this->containsRuleDef($armTokens)) {
+                continue;
+            }
+
             $arms[$ruleId] = new RuleArm(
                 ruleId: $ruleId,
                 fingerprint: sha1(implode("\x1f", array_map($this->text(...), $armTokens))),
@@ -99,6 +103,20 @@ final class RuleArmScanner
         }
 
         return $arm;
+    }
+
+    /**
+     * @param list<array{0:int,1:string,2?:int}|string> $arm
+     */
+    private function containsRuleDef(array $arm): bool
+    {
+        foreach ($arm as $token) {
+            if (is_array($token) && $token[0] === T_STRING && $token[1] === 'RuleDef') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
