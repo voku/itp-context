@@ -44,12 +44,8 @@ final class RuleArmScanner
             static fn (array|string $token): bool => !is_array($token) || !in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true),
         ));
         $count = count($tokens);
-        $bounds = $this->definitionBody($tokens);
-        if ($bounds === null) {
-            return [];
-        }
-
-        [$start, $end] = $bounds;
+        // Preserve standalone enum scans without a getDefinition() method.
+        [$start, $end] = $this->definitionBody($tokens) ?? [0, $count];
         $arms = [];
 
         for ($index = $start; $index + 4 < $end; $index++) {
