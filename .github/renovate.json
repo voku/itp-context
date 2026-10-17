@@ -2,5 +2,14 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "description": "PHPUnit 13 requires PHP >= 8.4.1; keep PHPUnit on a major that supports the declared PHP >=8.3 floor until that minimum is deliberately raised.",
+      "matchPackageNames": [
+        "phpunit/phpunit"
+      ],
+      "allowedVersions": "<13"
+    }
   ]
 }
