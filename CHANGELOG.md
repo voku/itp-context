@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- sharpened the package's own `TokenFirstDiscovery` and `DegradedDiscovery` rules with concrete `changeGuidance` and refs, and refreshed the committed self-export snapshot
+
 ## 0.4.0
 
 - added stateless `ApplicableRuleResolver` and `ApplicableRule`: resolves the rules applying to a list of PHP files once per rule id (statement, `changeGuidance`, refs, annotated subjects); consumed by `voku/phpstan-agent-format` via `agentFormat.itpContext`

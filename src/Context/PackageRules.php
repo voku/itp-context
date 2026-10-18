@@ -49,7 +49,8 @@ enum PackageRules implements RuleIdentifier
                 owner: 'Team-ItpContext',
                 rationale: 'Cheap token scanning narrows the work and avoids false positives from non-declaration code such as ::class references.',
                 verifiedBy: [TokenParserTest::class],
-                refs: ['README.md'],
+                refs: ['README.md', 'src/Service/TokenParser.php', 'tests/TokenParserTest.php'],
+                changeGuidance: 'Fix lookup and type errors in the token scan itself. Do not replace token scanning with Reflection or autoloading: symbols must be discoverable from source text without loading the code. Check ::class references and anonymous classes against tests/TokenParserTest.php.',
             ),
             self::AgentFriendlyMarkdown => new RuleDef(
                 statement: 'Export compact markdown summaries with minimal frontmatter.',
@@ -65,7 +66,8 @@ enum PackageRules implements RuleIdentifier
                 owner: 'Team-ItpContext',
                 rationale: 'Token-derived context lets agents inspect partial, generated or in-progress code without waiting for a clean runtime.',
                 verifiedBy: [ContextReaderTest::class, SummarizerTest::class],
-                refs: ['README.md'],
+                refs: ['README.md', 'src/Service/ContextReader.php', 'tests/ContextReaderTest.php', 'tests/SummarizerTest.php'],
+                changeGuidance: 'Context for annotated symbols must still come out when their classes are not autoloadable. Do not "fix" an error by requiring class_exists(), autoloading or Reflection for the annotated source symbol; fall back to the token-derived output. ContextReader skips the definition of an unresolvable rule id instead of throwing; keep it that way.',
             ),
             self::DiscoveryMetadata => new RuleDef(
                 statement: 'Export searchable ownership, reference and proof metadata with each context document.',
