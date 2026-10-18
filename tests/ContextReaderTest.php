@@ -6,6 +6,7 @@ namespace ItpContext\Tests;
 
 use ItpContext\Model\RuleTarget;
 use ItpContext\Service\ContextReader;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 final class ContextReaderTest extends TestCase
@@ -188,9 +189,7 @@ PHP);
         self::assertNull($method->invoke(new ContextReader(), $className . '::Example'));
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testToRelativePathReturnsOriginalPathWhenGetcwdFails(): void
     {
         eval(<<<'PHP'

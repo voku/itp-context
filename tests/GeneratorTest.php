@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ItpContext\Tests;
 
 use ItpContext\Service\Generator;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 final class GeneratorTest extends TestCase
@@ -206,9 +207,7 @@ PHP));
         (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testHandleRejectsEnumFilesThatCannotBeReadAfterLookup(): void
     {
         mkdir($this->generatedPath, 0777, true);
@@ -276,9 +275,7 @@ PHP);
         (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testHandleRejectsImportUpdatesWhenPregReplaceFails(): void
     {
         mkdir($this->generatedPath, 0777, true);
@@ -316,9 +313,7 @@ PHP);
         (new Generator())->handle('Example', 'SecurityBoundary', $this->generatedPath, 'Smoke\\Context');
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testHandleRejectsEnumWritesThatFail(): void
     {
         mkdir($this->generatedPath, 0777, true);

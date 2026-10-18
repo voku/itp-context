@@ -6,6 +6,7 @@ namespace ItpContext\Tests;
 
 use ItpContext\Service\ContextExporter;
 use ItpContext\Service\ContextQuery;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ContextQueryTest extends TestCase
@@ -48,9 +49,9 @@ final class ContextQueryTest extends TestCase
     }
 
     /**
-     * @dataProvider mismatchedFilterProvider
      * @param array<string, string> $filters
      */
+    #[DataProvider('mismatchedFilterProvider')]
     public function testSearchRejectsMismatchedFilters(array $filters): void
     {
         $results = (new ContextQuery())->search($this->exportPath, $filters);
