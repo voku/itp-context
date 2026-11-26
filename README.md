@@ -309,6 +309,16 @@ The package ships with six small CLI helpers.
 vendor/bin/itp-context-summarize path/to/src/DashboardView.php
 ```
 
+### `itp-context-source-hints`
+
+```shell
+vendor/bin/itp-context-source-hints --root=examples/basic-domain --file=src/DashboardView.php
+```
+
+Outputs bounded JSON containing source-verified `#[Rule]` identifiers, annotated subjects, project-relative PHP file paths and SHA-256 digests. This is a **syntax-only, read-only** query; it does not autoload rule enums or execute project definitions. Missing, out-of-root, symlink-escaping and non-PHP paths are ignored with an explicit count. At most eight files of 1 MiB each and sixteen rules are returned; omitted hints remain visible in the result.
+
+Use this after repository navigation (for example an `agent-map` candidate) before proposing the scope of a change, and again after approval for exact PHP files within scope. The identifiers are **leads, not proof**: inspect the owning enum's `verifiedBy`, `refs` (including ADRs) and `changeGuidance` before proposing edits to those paths. This command does not resolve that metadata, so it cannot invent it or grant mutation authority. No JavaScript/TypeScript rule annotation model is implied.
+
 ### `itp-context-validate`
 
 ```shell

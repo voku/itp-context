@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added `SourceRuleHintProjector` and `itp-context-source-hints`: bounded read-only JSON rule identifiers with source hashes; no project enum execution, ADR/test references must be confirmed separately
 - sharpened the package's own `TokenFirstDiscovery` and `DegradedDiscovery` rules with concrete `changeGuidance` and refs, and refreshed the committed self-export snapshot
 
 ## 0.4.0

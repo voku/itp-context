@@ -35,6 +35,16 @@ final class TokenParser
     }
 
     /**
+     * Parse an already captured source snapshot without reopening a path.
+     *
+     * @return list<RuleTarget>
+     */
+    public function getRuleTargetsFromCode(string $source): array
+    {
+        return $this->scanCode($source)['targets'];
+    }
+
+    /**
      * @return array{symbols:list<ParsedSymbol>, targets:list<RuleTarget>}
      */
     private function scanFile(string $filePath): array
