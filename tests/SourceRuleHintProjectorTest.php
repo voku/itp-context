@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace ItpContext\Tests;
 
+use ItpContext\Service\SourceRuleHintProjector;
+use ItpContext\Service\TokenParser;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
-use ItpContext\Service\SourceRuleHintProjector;
 
 /** @internal */
 final class SourceRuleHintProjectorTest extends TestCase
@@ -87,6 +88,40 @@ PHP);
         ]], $result['inspected_files']);
         self::assertSame($before, hash_file('sha256', $this->root . '/src/Widget.php'));
         self::assertArrayNotHasKey('refs', $result['rules'][0]);
+    }
+
+    public function testContentParserAndFileParserReturnTheSameTargets(): void
+    {
+        $source = <<<'PHP'
+<?php
+namespace Sample;
+use ItpContext\Attribute\Rule;
+#[Rule(\Acme\ArchitectureRules::Guard)]
+final class Guarded {}
+PHP;
+        file_put_contents($this->root . '/src/Guarded.php', $source);
+
+        $parser = new TokenParser();
+        self::assertEquals(
+            $parser->getRuleTargetsFromFile($this->root . '/src/Guarded.php'),
+            $parser->getRuleTargetsFromCode($source),
+        );
+    }
+
+    public function testSourceByteLimitIsNotJustAPreReadFilesizeGuess(): void
+    {
+        file_put_contents(
+            $this->root . '/src/Large.php',
+            '<?php #[\ItpContext\Attribute\Rule(\Acme\Rules::Huge)] class Large {}'
+            . str_repeat(' ', 1048577),
+        );
+
+        $result = (new SourceRuleHintProjector($this->root))->project(['src/Large.php']);
+
+        self::assertSame('abstained', $result['status']);
+        self::assertSame('no_readable_php_files', $result['reason']);
+        self::assertSame(1, $result['ignored_paths']);
+        self::assertSame([], $result['inspected_files']);
     }
 
     public function testRejectsPathsOutsideRootIncludingSymlinkEscape(): void
