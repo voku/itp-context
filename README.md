@@ -312,7 +312,7 @@ vendor/bin/itp-context-summarize path/to/src/DashboardView.php
 ### `itp-context-source-hints`
 
 ```shell
-vendor/bin/itp-context-source-hints --root=. --file=src/Ui/DashboardView.php --file=src/Service/Renderer.php
+vendor/bin/itp-context-source-hints --root=examples/basic-domain --file=src/DashboardView.php
 ```
 
 Outputs bounded JSON containing source-verified `#[Rule]` identifiers, annotated subjects, project-relative PHP file paths and SHA-256 digests. This is a **syntax-only, read-only** query; it does not autoload rule enums or execute project definitions. Missing, out-of-root, symlink-escaping and non-PHP paths are ignored with an explicit count. At most eight files of 1 MiB each and sixteen rules are returned; omitted hints remain visible in the result.
