@@ -1,0 +1,55 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloadPath = $GLOBALS['_composer_autoload_path'] ?? dirname(__DIR__) . '/vendor/autoload.php';
+if (!is_string($autoloadPath) || !is_file($autoloadPath)) {
+    fwrite(STDERR, "[FAIL] itp-context-source-hints: Composer autoload file not found.\n");
+    exit(1);
+}
+
+require $autoloadPath;
+
+try {
+    $root = getcwd();
+    if ($root === false) {
+        throw new RuntimeException('Cannot determine the current directory.');
+    }
+
+    $paths = [];
+    $tokens = array_slice($argv, 1);
+    for ($i = 0, $count = count($tokens); $i < $count; ++$i) {
+        $parts = explode('=', $tokens[$i], 2);
+        $option = $parts[0];
+        if (!in_array($option, ['--root', '--file'], true)) {
+            throw new InvalidArgumentException('Unknown option: ' . $option);
+        }
+        $value = $parts[1] ?? null;
+        if ($value === null) {
+            if (!isset($tokens[$i + 1]) || str_starts_with($tokens[$i + 1], '--')) {
+                throw new InvalidArgumentException($option . ' requires a value.');
+            }
+            $value = $tokens[++$i];
+        }
+        if ($value === '') {
+            throw new InvalidArgumentException($option . ' requires a non-empty value.');
+        }
+
+        if ($option === '--root') {
+            $root = $value;
+        } else {
+            $paths[] = $value;
+        }
+    }
+
+    if ($paths === []) {
+        throw new InvalidArgumentException('At least one --file path is required. Paths must be relative to --root.');
+    }
+
+    $projection = (new ItpContext\Service\SourceRuleHintProjector($root))->project($paths);
+    echo json_encode($projection, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), "\n";
+} catch (Throwable $exception) {
+    fwrite(STDERR, '[FAIL] itp-context-source-hints: ' . $exception->getMessage() . "\n");
+    exit(1);
+}
