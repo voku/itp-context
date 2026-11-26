@@ -130,7 +130,6 @@ final readonly class SourceRuleHintProjector
         try {
             $opened = fstat($stream);
             if (!is_array($opened)
-                || !is_int($opened['mode'] ?? null)
                 || ($opened['mode'] & 0170000) !== 0100000
                 || !$this->pathStillMatchesHandle($root, $file, $opened)
             ) {
